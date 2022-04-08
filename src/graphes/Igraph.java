@@ -1,26 +1,22 @@
-package composants;
+package graphes;
 
-public class Graphe {
-	protected static final int NB_POINTS = 6;
-	private boolean[][] coefficients;
-	
-	
+public interface Igraph {
 	/**
-	 * @brief Constructeur de graphe
+	 * @brief Retourne le nombre de noeuds
+	 * @return Nombre de noeuds
 	 */
-	public Graphe() {
-		this.coefficients = new boolean[NB_POINTS][NB_POINTS];
-	}
+	int getNbNoeuds();
 	
-	
+
 	/**
 	 * @brief Ajoute un arc au graphe
 	 * @param i Numéro de la ligne
 	 * @param j Numéro de la colonne
 	 */
-	public void ajouterArc(int i, int j) {
-		this.coefficients[i-1][j-1] = true;
-	}
+	void ajouterArc(int i, int j, int valeur);
+	
+	
+	int valeurArc(int i, int j);
 	
 	
 	/**
@@ -29,8 +25,8 @@ public class Graphe {
 	 * @param j Numéro de la colonne
 	 * @return true s'il y a un arc, false sinon
 	 */
-	public boolean aArc(int i, int j) {
-		return this.coefficients[i-1][j-1];
+	default boolean aArc(int i, int j) {
+		return valeurArc(i, j) != 0;
 	}
 	
 	
@@ -39,11 +35,11 @@ public class Graphe {
 	 * @param n Numéro du noeud
 	 * @return Nombre de successeurs
 	 */
-	public int dOut(int n) {
+	default int dOut(int n) {
 		int nbDegre = 0;
 		
-		for (boolean ma : coefficients[n-1]) {
-			nbDegre += ma ? 1 : 0;
+		for (int i=0; i<getNbNoeuds(); ++i) {
+			nbDegre += aArc(n, i+1) ? 1 : 0;
 		}
 		
 		return nbDegre;
@@ -55,11 +51,11 @@ public class Graphe {
 	 * @param n Numéro du noeud
 	 * @return Nombre de prédécesseurs
 	 */
-	public int dIn(int n) {
+	default int dIn(int n) {
 		int nbDegre = 0;
 		
-		for (int i=0; i<NB_POINTS; ++i) {
-			nbDegre += coefficients[i][n-1] ? 1 : 0;
+		for (int i=0; i<getNbNoeuds(); ++i) {
+			nbDegre += aArc(i+1, n) ? 1 : 0;
 		}
 		
 		return nbDegre;
