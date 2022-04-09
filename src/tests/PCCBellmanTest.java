@@ -1,13 +1,15 @@
 package tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+import algorithmes.PCCBellman;
 import graphes.GrapheLA;
-import algorithmes.PCCDijkstra;
 
-public class PCCDijkstraTest {
+public class PCCBellmanTest {
 	@Test
 	public void exo3_1_1() {
 		GrapheLA g = new GrapheLA(9);
@@ -35,17 +37,8 @@ public class PCCDijkstraTest {
 		
 		g.ajouterArc(9, 8, 10);	// I -> H (10)
 		
-		assertTrue(PCCDijkstra.estOK(g));
-		
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 2), "A - D - B");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 3), "A - C");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 4), "A - D");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 5), "A - D - E");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 6), "A - C - H - G - F");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 7), "A - C - H - G");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 8), "A - C - H");
+		assertFalse(PCCBellman.estOK(g));
 	}
-	
 	
 	@Test
 	public void exo3_2() {
@@ -74,19 +67,18 @@ public class PCCDijkstraTest {
 		
 		g.ajouterArc(10, 6, 6);	// J -> F (6)
 		
-		assertTrue(PCCDijkstra.estOK(g));
+		assertTrue(PCCBellman.estOK(g));
 		
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 2), "A - B");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 3), "A - B - C");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 4), "A - D");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 5), "A - D - E");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 6), "A - D - J - F");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 7), "A - D - E - G");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 8), "A - D - E - I - H");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 9), "A - D - E - I");
-		assertEquals(PCCDijkstra.algorithmeDijkstra(g, 1, 10), "A - D - J");
+//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 2), "A - B");
+//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 3), "A - B - C");
+//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 4), "A - D");
+//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 5), "A - D - E");
+//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 6), "A - D - J - F");
+//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 7), "A - D - E - G");
+//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 8), "A - D - E - I - H");
+//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 9), "A - D - E - I");
+//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 10), "A - D - J");
 	}
-	
 	
 	@Test
 	public void exo3_6_1() {
@@ -109,6 +101,21 @@ public class PCCDijkstraTest {
 		
 		g.ajouterArc(6, 5, 3);	// F -> E (3)
 		
-		assertFalse(PCCDijkstra.estOK(g));
+		assertTrue(PCCBellman.estOK(g));
+	}
+
+	public void exoBonus() {
+		GrapheLA g = new GrapheLA(4);
+		
+		g.ajouterArc(1, 2, 5);	// 0 -> 1 (5)
+		g.ajouterArc(1, 3, 4);	// 0 -> 2 (4)
+		
+		g.ajouterArc(2, 4, 3);	// 1 -> 3 (3)
+		
+		g.ajouterArc(3, 2, -6);	// 2 -> 1 (-6)
+		
+		g.ajouterArc(4, 3, 2);	// 3 -> 2 (2)
+		
+		assertFalse(PCCBellman.estOK(g));
 	}
 }

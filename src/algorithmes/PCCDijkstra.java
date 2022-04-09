@@ -16,7 +16,7 @@ public class PCCDijkstra {
 	 * @param g Le graphe
 	 * @return true si applicable, false sinon
 	 */
-	private static boolean estOK(Igraph g) {
+	public static boolean estOK(Igraph g) {
 		for (int i = 0; i<g.getNbNoeuds(); ++i) {
 			for (int j=0; j < g.getNbNoeuds(); ++j) {
 				if (g.valeurArc(i+1, j+1) < 0) {
@@ -27,13 +27,21 @@ public class PCCDijkstra {
 		return true;
 	}
 	
-	
-	// Si le noeud testé n'est pas terminé ET que l'arc existe ET (que sa distance n'est pas calculée OU qu'elle est plus optimisée)
+	/*
+	 * Si le noeud testé n'est pas terminé ET que l'arc existe ET (que sa distance n'est pas calculée OU 
+	 * qu'elle est strictement plus optimisée OU (qu'elle est autant optimisée ET que l'index du successeur
+	 * testé est inférieur au prédécesseur actuel))
+	 * 
+	 * Si le noeud testé n'est pas terminé ET que l'arc existe ET (que sa distance n'est pas calculée OU qu'elle est plus optimisée)
+	 */
 	private static boolean peutRemplacerLaDistanceActuelle(Igraph g, int[][] listeDistances, int idxNoeudActuel, int idxSucc) {
+		/*return listeDistances[idxSucc][0] != -1   &&   g.aArc(idxNoeudActuel+1, idxSucc+1)   &&   (listeDistances[idxSucc][0] == -100  ||
+				listeDistances[idxSucc][0] > g.valeurArc(idxNoeudActuel+1, idxSucc+1) + listeDistances[idxNoeudActuel][0]
+				|| (listeDistances[idxSucc][0] == g.valeurArc(idxNoeudActuel+1, idxSucc+1) + listeDistances[idxNoeudActuel][0]
+					&& idxNoeudActuel < idxSucc));*/
 		return listeDistances[idxSucc][0] != -1   &&   g.aArc(idxNoeudActuel+1, idxSucc+1)   &&   (listeDistances[idxSucc][0] == -100 ||
 				listeDistances[idxSucc][0] > g.valeurArc(idxNoeudActuel+1, idxSucc+1) + listeDistances[idxNoeudActuel][0]);
 	}
-	
 	
 	
 	private static int choixNoeudSuivant(Igraph g, int[][] listeDistances, int idxNoeudActuel) {
@@ -47,35 +55,36 @@ public class PCCDijkstra {
 				listeDistances[idxSucc] = new int[] {g.valeurArc(idxNoeudActuel+1, idxSucc+1) + listeDistances[idxNoeudActuel][0], idxNoeudActuel};
 			}
 			
-			//Debug : System.out.println("   Noeud " + idxSucc + " : " + listeDistances[idxSucc][0] + "[" + listeDistances[idxSucc][1] + "]");
-			
-			// Pas le début
-			if (listeDistances[idxSucc][1] != -1 &&
-					// Valeur non prise OU optimsable
-					(idxNoeudSuivant == -100 || listeDistances[idxNoeudSuivant][0] > listeDistances[idxSucc][0]) &&
-							// Pas déjà terminé
-							listeDistances[idxSucc][0] != -1 && 
-								// La distance doit avoir été déjà calculée
-								listeDistances[idxSucc][0] != -100 &&
-									// Le prochain ne peut être identique à l'actuel
-									idxNoeudActuel != idxSucc){
+			//System.out.println("Noeud " + String.valueOf((char)(idxSucc+1 + 64)) + " : " + listeDistances[idxSucc][0] + "[" + String.valueOf((char)(listeDistances[idxSucc][1]+1 + 64)) + "]");
+		
+			/*
+			 *  Pas le début ET (valeur non prise OU
+			 *  optimsable) ET
+			 *  Pas déjà terminé ET La distance doit avoir été déjà calculée ET
+			 *  Le prochain ne peut être identique à l'actuel
+			 */
+			if (listeDistances[idxSucc][1] != -1 && (idxNoeudSuivant == -100 ||
+					listeDistances[idxNoeudSuivant][0] > listeDistances[idxSucc][0]) &&
+						listeDistances[idxSucc][0] != -1 && listeDistances[idxSucc][0] != -100 &&
+							idxNoeudActuel != idxSucc){
+									
 				idxNoeudSuivant = idxSucc;
 			}
 		}
 		
 		listeDistances[idxNoeudActuel][0] = -1;
 		
-		//Debug : System.out.println("\nChoix : " + idxNoeudSuivant);
+		//System.out.println("   -> Choix : " + String.valueOf((char)(idxNoeudSuivant+1 + 64)) + "\n");
 		
 		return idxNoeudSuivant;
 	}
 	
 	
-	private static String affichage(int[][] listeDistances, int idxNoeudsDepart, int idxNoeudsArrivee) {
+	private static String affichage(int[][] listeDistances, int idxNoeudDepart, int idxNoeudArrivee) {
 		LinkedList<Integer> liste = new LinkedList<>();
-		liste.addLast(idxNoeudsArrivee);
+		liste.addLast(idxNoeudArrivee);
 		
-		while(liste.getLast() != idxNoeudsDepart) {
+		while(liste.getLast() != idxNoeudDepart) {
 			liste.addLast(listeDistances[liste.getLast()][1]);
 		}
 		
@@ -85,7 +94,7 @@ public class PCCDijkstra {
 		while(!liste.isEmpty()) {
 			sb.append(String.valueOf((char)(liste.removeLast()+1 + 64)));
 			
-			if (liste.size() != 0)
+			if (!liste.isEmpty())
 				 sb.append(" - ");
 		}
 		
@@ -93,7 +102,7 @@ public class PCCDijkstra {
 	}
 	
 	
-	public static String algoritmeDijkstra(Igraph g, int numNoeudsDepart, int numNoeudsArrivee) throws ArcNégatifEx {
+	public static String algorithmeDijkstra(Igraph g, int numNoeudDepart, int numNoeudArrivee) throws ArcNégatifEx {
 		if (!estOK(g)) { throw new ArcNégatifEx(); }
 		
 		int[][] listeDistances = new int[g.getNbNoeuds()][2];
@@ -101,20 +110,20 @@ public class PCCDijkstra {
 		
 		// Rempli le tableau de distance à l'infini
 		for (int i=0; i<g.getNbNoeuds(); ++i) {
-			if (i != numNoeudsDepart - 1) {
+			if (i != numNoeudDepart - 1) {
 				listeDistances[i][0] = -100;
 			}
 		}
 		
 		// Indique le début du graphe : absance définitive de prédécesseur
-		listeDistances[numNoeudsDepart - 1][1] = -1;
+		listeDistances[numNoeudDepart - 1][1] = -1;
 		
-		int idxNoeudActuel = numNoeudsDepart - 1;
+		int idxNoeudActuel = numNoeudDepart - 1;
 		
-		while(listeDistances[numNoeudsArrivee-1][0] == -100) {
+		while(listeDistances[numNoeudArrivee-1][0] != -1) {
 			idxNoeudActuel = choixNoeudSuivant(g, listeDistances, idxNoeudActuel);
 		}
 		
-		return affichage(listeDistances, numNoeudsDepart-1, numNoeudsArrivee-1);
+		return affichage(listeDistances, numNoeudDepart-1, numNoeudArrivee-1);
 	}
 }
