@@ -66,18 +66,19 @@ public class PCCBellmanTest {
 		g.ajouterArc(9, 8, 2);	// I -> H (2)
 		
 		g.ajouterArc(10, 6, 6);	// J -> F (6)
+		g.ajouterArc(10, 7, 6);	// J -> G (6)
 		
 		assertTrue(PCCBellman.estOK(g));
 		
-//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 2), "A - B");
-//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 3), "A - B - C");
-//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 4), "A - D");
-//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 5), "A - D - E");
-//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 6), "A - D - J - F");
-//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 7), "A - D - E - G");
-//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 8), "A - D - E - I - H");
-//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 9), "A - D - E - I");
-//		assertEquals(PCCBellman.algorithmeBellman(g, 1, 10), "A - D - J");
+		assertEquals(PCCBellman.algorithmeBellman(g, 1, 2), "A - B");
+		assertEquals(PCCBellman.algorithmeBellman(g, 1, 3), "A - B - C");
+		assertEquals(PCCBellman.algorithmeBellman(g, 1, 4), "A - D");
+		assertEquals(PCCBellman.algorithmeBellman(g, 1, 5), "A - D - E");
+		assertEquals(PCCBellman.algorithmeBellman(g, 1, 6), "A - D - J - F");
+		assertEquals(PCCBellman.algorithmeBellman(g, 1, 7), "A - D - E - G");
+		assertEquals(PCCBellman.algorithmeBellman(g, 1, 8), "A - D - E - I - H");
+		assertEquals(PCCBellman.algorithmeBellman(g, 1, 9), "A - D - E - I");
+		assertEquals(PCCBellman.algorithmeBellman(g, 1, 10), "A - D - J");
 	}
 	
 	@Test
@@ -104,6 +105,7 @@ public class PCCBellmanTest {
 		assertTrue(PCCBellman.estOK(g));
 	}
 
+	@Test
 	public void exoBonus() {
 		GrapheLA g = new GrapheLA(4);
 		

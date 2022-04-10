@@ -73,6 +73,7 @@ public class PCCDijkstraTest {
 		g.ajouterArc(9, 8, 2);	// I -> H (2)
 		
 		g.ajouterArc(10, 6, 6);	// J -> F (6)
+		g.ajouterArc(10, 7, 6);	// J -> G (6)
 		
 		assertTrue(PCCDijkstra.estOK(g));
 		
