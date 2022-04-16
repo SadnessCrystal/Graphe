@@ -1,11 +1,19 @@
 package algorithmes;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 import exceptions.ArcNégatifEx;
-import graphes.Igraph;
+import exceptions.NoPathEx;
+import graphes.IGraph;
+
+// Notes : les HashMap peuvent être optimisées en n'insérant les éléments au fur et à mesure au lieu de le faire tous en même temps ???
 
 public class PCCDijkstra {
+	private static final int FIN = -1;			// Nombre indiquant la fin du calcul de la distance pour le noeud concerné
+	private static final int NON_CALCULE = -100;// Nombre indiquant l'absence de calcul de la distance pour le noeud conserné
+	
 	
 	private PCCDijkstra() {
 		throw new IllegalStateException("Classe utilitaire");
@@ -16,83 +24,86 @@ public class PCCDijkstra {
 	 * @param g Le graphe
 	 * @return true si applicable, false sinon
 	 */
-	public static boolean estOK(Igraph g) {
-		for (int i = 0; i<g.getNbNoeuds(); ++i) {
-			for (int j=0; j < g.getNbNoeuds(); ++j) {
-				if (g.valeurArc(i+1, j+1) < 0) {
+	public static boolean estOK(IGraph g) {
+		for (String i : g.noeuds()) {
+			for (String j : g.noeuds()) {
+				if (g.aArc(i, j) && g.getValeur(i, j) < 0)
 					return false;
-				}
 			}
 		}
 		return true;
 	}
 	
 	/*
-	 * Si le noeud testé n'est pas terminé ET que l'arc existe ET (que sa distance n'est pas calculée OU 
-	 * qu'elle est strictement plus optimisée OU (qu'elle est autant optimisée ET que l'index du successeur
-	 * testé est inférieur au prédécesseur actuel))
-	 * 
-	 * Si le noeud testé n'est pas terminé ET que l'arc existe ET (que sa distance n'est pas calculée OU qu'elle est plus optimisée)
+	 * 	Vérifie si toutes les conditions suivantes sont réunies :
+	 * 		- Le noeud actuellement testé n'a pas été mis de côté par l'algorithme (son chemin n'est donc pas certain d'être optimal)
+	 * 		- Il existe un arc entre le noeud "actuel" et le noeud actuellement testé
+	 *  	- L'une des conditions suivantes doit être remplie :
+	 * 			- Aucun chemin entre le noeud de départ et le noeud testé n'a encore été calculé
+	 * 			- Le chemin (en passant par le noeud "actuel") est plus optimisé que le chemin actuel
 	 */
-	private static boolean peutRemplacerLaDistanceActuelle(Igraph g, int[][] listeDistances, int idxNoeudActuel, int idxSucc) {
-		/*return listeDistances[idxSucc][0] != -1   &&   g.aArc(idxNoeudActuel+1, idxSucc+1)   &&   (listeDistances[idxSucc][0] == -100  ||
-				listeDistances[idxSucc][0] > g.valeurArc(idxNoeudActuel+1, idxSucc+1) + listeDistances[idxNoeudActuel][0]
-				|| (listeDistances[idxSucc][0] == g.valeurArc(idxNoeudActuel+1, idxSucc+1) + listeDistances[idxNoeudActuel][0]
-					&& idxNoeudActuel < idxSucc));*/
-		return listeDistances[idxSucc][0] != -1   &&   g.aArc(idxNoeudActuel+1, idxSucc+1)   &&   (listeDistances[idxSucc][0] == -100 ||
-				listeDistances[idxSucc][0] > g.valeurArc(idxNoeudActuel+1, idxSucc+1) + listeDistances[idxNoeudActuel][0]);
+	private static boolean peutRemplacerLaDistanceActuelle(IGraph g, Map<String, Integer> distances, String noeudA, String noeudS) {
+		return 	distances.get(noeudS) != FIN && g.aArc(noeudA, noeudS) && (distances.get(noeudS) == NON_CALCULE ||
+					distances.get(noeudS) > g.getValeur(noeudA, noeudS) + distances.get(noeudA));
 	}
 	
 	
-	private static int choixNoeudSuivant(Igraph g, int[][] listeDistances, int idxNoeudActuel) {
+	/*
+	 * 	Vérifie si toutes les conditions suivantes sont réunies :
+	 *  	- L'une des conditions suivantes doit être remplie :
+	 *  		- Aucun noeud n'a encore été choisi comme noeud succésseur au noeud "actuel"
+	 *  		- Le noeud actuellement testé a une longueur de chemin inférieure au noeud succésseur (et est donc plus intéressant)
+	 *  	- Le noeud potentiellement successeur ne doit pas avoir été mis de côté par l'algorithme (on ne refait pas 2 fois les calculs)
+	 *  	- La distance doit avoir été déjà calculée (il existe bien un chemin entre le noeud de départ et le noeud potentiellement successeur)
+	 *  	- Le noeud potentiellement successeur ne peut être identique au noeud "actuel"
+	 */
+	private static boolean peutEtreLeProchainNoeud(Map<String, Integer> distances, Map<String, String> predecesseurs, String idxSucc, String idxNoeudSuivant, String idxNoeudActuel) {
+		return (idxNoeudSuivant == null || distances.get(idxNoeudSuivant) > distances.get(idxSucc)) &&
+				distances.get(idxSucc) != FIN && distances.get(idxSucc) != NON_CALCULE &&
+					!idxNoeudActuel.equals(idxSucc);
+	}
+	
+	
+	private static String choixNoeudSuivant(IGraph g, Map<String, Integer> distances, Map<String, String> predecesseurs, String noeudActuel){
 		// Impossible de prendre un noeud déjà terminé
-		assert(listeDistances[idxNoeudActuel][0] != -1);
+		assert(distances.get(noeudActuel) != FIN);
 		
-		int idxNoeudSuivant = -100;
+		String noeudSuivant = null;
 		
-		for (int idxSucc=0; idxSucc<g.getNbNoeuds(); ++idxSucc) {
-			if (peutRemplacerLaDistanceActuelle(g, listeDistances, idxNoeudActuel, idxSucc)) {
-				listeDistances[idxSucc] = new int[] {g.valeurArc(idxNoeudActuel+1, idxSucc+1) + listeDistances[idxNoeudActuel][0], idxNoeudActuel};
+		for (String noeudSucc : g.noeuds()) {
+			if (peutRemplacerLaDistanceActuelle(g, distances, noeudActuel, noeudSucc)) {
+				distances.put(noeudSucc, g.getValeur(noeudActuel, noeudSucc) + distances.get(noeudActuel));
+				predecesseurs.put(noeudSucc, noeudActuel);
 			}
 			
-			//System.out.println("Noeud " + String.valueOf((char)(idxSucc+1 + 64)) + " : " + listeDistances[idxSucc][0] + "[" + String.valueOf((char)(listeDistances[idxSucc][1]+1 + 64)) + "]");
+			System.out.println("Noeud " + noeudSucc + " : " + distances.get(noeudSucc) + "[" + predecesseurs.get(noeudSucc) + "]");
 		
-			/*
-			 *  Pas le début ET (valeur non prise OU
-			 *  optimsable) ET
-			 *  Pas déjà terminé ET La distance doit avoir été déjà calculée ET
-			 *  Le prochain ne peut être identique à l'actuel
-			 */
-			if (listeDistances[idxSucc][1] != -1 && (idxNoeudSuivant == -100 ||
-					listeDistances[idxNoeudSuivant][0] > listeDistances[idxSucc][0]) &&
-						listeDistances[idxSucc][0] != -1 && listeDistances[idxSucc][0] != -100 &&
-							idxNoeudActuel != idxSucc){
-									
-				idxNoeudSuivant = idxSucc;
+			if (peutEtreLeProchainNoeud(distances, predecesseurs, noeudSucc, noeudSuivant, noeudActuel)){
+				noeudSuivant = noeudSucc;
 			}
 		}
 		
-		listeDistances[idxNoeudActuel][0] = -1;
+		distances.put(noeudActuel, FIN);
 		
-		//System.out.println("   -> Choix : " + String.valueOf((char)(idxNoeudSuivant+1 + 64)) + "\n");
-		
-		return idxNoeudSuivant;
+		System.out.println("   -> Choix : " + noeudSuivant + "\n");
+			
+		return noeudSuivant;
 	}
 	
 	
-	private static String affichage(int[][] listeDistances, int idxNoeudDepart, int idxNoeudArrivee) {
-		LinkedList<Integer> liste = new LinkedList<>();
-		liste.addLast(idxNoeudArrivee);
+	private static String affichage(Map<String, String> predecesseurs, String noeudD, String noeudA) {
+		LinkedList<String> liste = new LinkedList<>();
+		liste.addLast(noeudA);
 		
-		while(liste.getLast() != idxNoeudDepart) {
-			liste.addLast(listeDistances[liste.getLast()][1]);
+		while(!liste.getLast().equals(noeudD)) {
+			liste.addLast(predecesseurs.get(liste.getLast()));
 		}
 		
 		
 		StringBuilder sb = new StringBuilder();
 		
 		while(!liste.isEmpty()) {
-			sb.append(String.valueOf((char)(liste.removeLast()+1 + 64)));
+			sb.append(liste.removeLast());
 			
 			if (!liste.isEmpty())
 				 sb.append(" - ");
@@ -102,28 +113,48 @@ public class PCCDijkstra {
 	}
 	
 	
-	public static String algorithmeDijkstra(Igraph g, int numNoeudDepart, int numNoeudArrivee) throws ArcNégatifEx {
-		if (!estOK(g)) { throw new ArcNégatifEx(); }
-		
-		int[][] listeDistances = new int[g.getNbNoeuds()][2];
-		
+	private static Map<String, Integer> initialisationDistances(IGraph g, String noeudD){
+		Map<String, Integer> distances = new HashMap<>();
 		
 		// Rempli le tableau de distance à l'infini
-		for (int i=0; i<g.getNbNoeuds(); ++i) {
-			if (i != numNoeudDepart - 1) {
-				listeDistances[i][0] = -100;
-			}
+		for (String i : g.noeuds()) {
+			if (!i.equals(noeudD))
+				distances.put(i, NON_CALCULE);
+			else
+				distances.put(noeudD, 0);				
 		}
+		
+		return distances;
+	}
+	
+	private static Map<String, String> initialisationPredecesseurs(IGraph g, String noeudD){
+		Map<String, String> predecesseurs = new HashMap<>();
 		
 		// Indique le début du graphe : absance définitive de prédécesseur
-		listeDistances[numNoeudDepart - 1][1] = -1;
-		
-		int idxNoeudActuel = numNoeudDepart - 1;
-		
-		while(listeDistances[numNoeudArrivee-1][0] != -1) {
-			idxNoeudActuel = choixNoeudSuivant(g, listeDistances, idxNoeudActuel);
+		for (String i : g.noeuds()) {
+			if (!i.equals(noeudD))
+				predecesseurs.put(i, noeudD);
 		}
 		
-		return affichage(listeDistances, numNoeudDepart-1, numNoeudArrivee-1);
+		return predecesseurs;
+	}
+	
+	
+	public static String algorithmeDijkstra(IGraph g, String noeudD, String noeudA) throws ArcNégatifEx, NoPathEx {
+		if (!estOK(g)) { throw new ArcNégatifEx(); }
+		
+		Map<String, Integer> distances = initialisationDistances(g, noeudD);
+		Map<String, String> predecesseurs = initialisationPredecesseurs(g, noeudD);
+		
+		String noeudActuel = noeudD;
+		
+		while(distances.get(noeudA) != FIN) {
+			if (noeudActuel == null)
+				throw new NoPathEx();
+			
+			noeudActuel = choixNoeudSuivant(g, distances, predecesseurs, noeudActuel);
+		}
+		
+		return affichage(predecesseurs, noeudD, noeudA);
 	}
 }
