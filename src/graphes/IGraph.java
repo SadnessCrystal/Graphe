@@ -1,8 +1,8 @@
 package graphes;
 
-import java.util.List;
+import java.util.Iterator;
 
-public interface IGraph {
+public interface IGraph extends Iterable<String>{
 
 	int getNbNoeuds();
 
@@ -22,5 +22,6 @@ public interface IGraph {
 
 	int getValeur(String n1, String n2);
 	
-	List<String> noeuds();
+	@Override
+	Iterator<String> iterator();
 }

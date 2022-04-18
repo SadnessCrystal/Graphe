@@ -2,6 +2,7 @@ package graphes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -93,10 +94,8 @@ public class GrapheMA implements IGraph {
 	}
 
 	@Override
-	public List<String> noeuds() {
-		List<String> list = new ArrayList<>();
-		noeuds.keySet().iterator().forEachRemaining(list::add);
-		return list;
+	public Iterator<String> iterator() {
+		return noeuds.keySet().iterator();
 	}
 
 }

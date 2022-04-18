@@ -2,6 +2,7 @@ package graphes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +44,7 @@ public class GrapheLA implements IGraph{
 		for (int i = 0; i < nb; ++i)
 			la.add(new ArrayList<>());
 	}
+	
 	@Override
 	public int getNbNoeuds() {
 		return la.size();
@@ -55,12 +57,14 @@ public class GrapheLA implements IGraph{
 	public boolean estArcOK(String n1, String n2) {
 		return estNoeudOK(n1) && estNoeudOK(n2);
 	}
+	
 	@Override
 	public void ajouterArc(String label1, String label2, int valeur) {
 		assert ! aArc(label1,label2);
 		int n1 = noeuds.get(label1);
 		la.get(n1).add(new Arc(label2, valeur));
 	}
+	
 	@Override
 	public boolean aArc(String label1, String label2) {
 		assert estArcOK(label1,label2);
@@ -79,11 +83,13 @@ public class GrapheLA implements IGraph{
 		}
 		return s;
 	}
+	
 	@Override
 	public int dOut(String label) {
 		assert estNoeudOK(label);
 		return la.get(noeuds.get(label)).size();
 	}
+	
 	@Override
 	public int dIn(String label) {
 		assert estNoeudOK(label);
@@ -103,10 +109,9 @@ public class GrapheLA implements IGraph{
 				return a.valeur;
 		throw new RuntimeException("Pas de valeur trouvée pour l'arc " + n1 +" -> " +n2);
 	}
+	
 	@Override
-	public List<String> noeuds() {
-		List<String> list = new ArrayList<>();
-		noeuds.keySet().iterator().forEachRemaining(list::add);
-		return list;
+	public Iterator<String> iterator() {
+		return noeuds.keySet().iterator();
 	}
 }
