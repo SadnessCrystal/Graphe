@@ -176,15 +176,16 @@ public class PCCDijkstra {
 		return distances;
 	}
 	
-	
 	/**
 	 * @brief Algorithme de Dijkstra
 	 * @param g Graphe contenant les noeuds
 	 * @param noeudD Noeud de départ
 	 * @param noeudA Noeud d'arrivée
 	 * @return Le chemin le plus court entre noeudD et noeudA
-	 * @throws ArcNégatifEx, présence d'au moins un arc négatif dans le graphe, impossible de calculer n'importe quel chemin
-	 * @throws NoPathEx, aucun chemin entre le noeud de départ et le noeud d'arrivé trouvé
+	 * @throws ArcNégatifEx Présence d'au moins un arc négatif dans le graphe,
+	 * 					    impossible de calculer le moindre chemin
+	 * @throws NoPathEx Aucun chemin entre le noeud de départ et le noeud
+	 * 					 d'arrivé trouvé
 	 */
 	public static String algorithmeDijkstra(IGraph g, String noeudD, String noeudA)
 											throws ArcNégatifEx, NoPathEx {
