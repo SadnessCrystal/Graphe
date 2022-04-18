@@ -1,183 +1,212 @@
 package algorithmes;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import exceptions.CircuitAbsorbantEx;
-import graphes.Igraph;
+import exceptions.NoPathEx;
+import graphes.IGraph;
 
 public class PCCBellman {
-	
 	private PCCBellman() {
 		throw new IllegalStateException("Classe utilitaire");
 	}
+
+	// Penser à vérifier boucle foreach avec listePredecesseur
+	
+	/**
+	 * @brief
+	 * @param g Graphe
+	 * @param listePredecesseurs HashMap des prédecesseurs de chaque noeud
+	 * @param listeNoeudsTries Liste vide, contiendra la liste des noeuds triés
+	 * @param triParNiveau 
+	 * @param nbNoeudTriee Nombre de noeuds triés
+	 * @return
+	 */
+	private static int nettoyagePredecesseurs(IGraph g, Map<String, List<String>> listePredecesseurs, List<String> listeNoeudsTries, List<String> triParNiveau, int nbNoeudTriee) {
+		for (String i : g.noeuds()) {
+			if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).isEmpty()) {
+				listeNoeudsTries.add(i);
+				listePredecesseurs.remove(i);
+				nbNoeudTriee++;
+				triParNiveau.add(i);
+			}
+		}
+		return nbNoeudTriee;
+	}
+	
+	
+	/**
+	 * @brief On supprime les noeuds de la liste de la liste de
+	 * prédesesseurs de tous les autres noeuds
+	 * @param g Graphe
+	 * @param listePredecesseurs HashMap des prédecesseurs de chaque noeud
+	 * @param listeNoeudsTries Liste des noeuds venant d'être triés
+	 */
+	private static void suppressionPredecesseurs(IGraph g, Map<String, List<String>> listePredecesseurs, List<String> listeNoeudsTries) {
+		for (String i : g.noeuds()) {
+			for (String j : listeNoeudsTries) {
+				/* Si un noeud venant d'être trié est encore présent en tant que prédécesseur,
+				 * alors le supprimer de la liste des prédecesseurs */
+				if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(j)) {
+					listePredecesseurs.get(i).remove(j);
+				}
+			}
+		}
+	}
 	
 
-	public static boolean estOK(Igraph g) {
-
-		ArrayList<Integer>[] listePredecesseurs = listePredecesseurs(g);
-		ArrayList<Integer> listeNoeudsTries = new ArrayList<>();
+	public static boolean estOK(IGraph g) {
+		// Liste des noeuds triées par niveau
+		List<String> triParNiveau = new ArrayList<>();
 		
-		int[][] listeNoeudsDistancesPredecesseurs = new int[g.getNbNoeuds()][3];
-		int idxNoeudTriee = 0;
-		boolean aucunNoeudEnleve = true;
+		// Liste de prédecesseur de chaque noeud
+		Map<String, List<String>> listePredecesseurs = listePredecesseurs(g);
 		
-		for (int i=0; i<g.getNbNoeuds(); ++i) {
-			listeNoeudsDistancesPredecesseurs[i][0] = -1;
-		}
-		
-		// On supprime les prédécesseurs qui sont déjà triés
-		while(idxNoeudTriee < g.getNbNoeuds()) { 
-
-			aucunNoeudEnleve = true;
+		int nbNoeudTriee = 0;	// Nombre de noeuds triée
+				
+		// Tant qu'il existe des noeuds non triés
+		while(nbNoeudTriee < g.getNbNoeuds()) { 
+			// Liste temporaire de noeuds venant d'être attribué
+			ArrayList<String> listeNoeudsTries = new ArrayList<>();
 			
-			for (int i=0; i<g.getNbNoeuds(); ++i) {
-				if (listePredecesseurs[i].isEmpty()) {
-					listeNoeudsTries.add(i);
-					listePredecesseurs[i].add(-1);
-					listeNoeudsDistancesPredecesseurs[idxNoeudTriee++][0] = i;
-					aucunNoeudEnleve = false;
-				}
-			}
+			// Detection des noeuds de niveau supérieur
+			int tmp = nettoyagePredecesseurs(g, listePredecesseurs, listeNoeudsTries, triParNiveau, nbNoeudTriee);
 			
-			for (int i=0; i<g.getNbNoeuds(); ++i) {
-				for (int j : listeNoeudsTries) {
-					if (listePredecesseurs[i].contains(j)) {
-						listePredecesseurs[i].remove(Integer.valueOf(j));
-					}
-				}
-			}
-			
-			if (aucunNoeudEnleve)
+			// Si aucun noeud n'a été trié, c'est la preuve d'un circuit
+			if (tmp - nbNoeudTriee == 0)
 				return false;
 			
-			listeNoeudsTries.clear();
+			nbNoeudTriee = tmp;// Actualisation du nombre de noeuds
+			
+			// Suppression de la liste des prédecesseurs des noeuds venant d'être triés
+			suppressionPredecesseurs(g, listePredecesseurs, listeNoeudsTries);
 		}
-		
+		// Si l'algorithme est parvenu jusque là, c'est la preuve de l'abscence de circuit.
 		return true;
 	}
 	
 	
-	private static ArrayList<Integer>[] listePredecesseurs(Igraph g){
-		ArrayList<Integer>[] listePredecesseurs = new ArrayList[g.getNbNoeuds()];
+	private static Map<String, List<String>> listePredecesseurs(IGraph g){
+		/*
+		 * Tableau de nbNoeuds dont chaque case comporte la liste de
+		 * prédecesseur du noeud correspodnant
+		 */
+		Map<String, List<String>> predecesseurs = new HashMap<>();
 		
-		for (int i=0; i<g.getNbNoeuds(); ++i) {
-			listePredecesseurs[i] = new ArrayList<>();
-		}
-		
-		// Initialisation des prédécesseurs
-		for (int noeudPrec=0; noeudPrec<g.getNbNoeuds(); ++noeudPrec) {
-			for (int noeudSucc=0; noeudSucc<g.getNbNoeuds(); ++noeudSucc) {
-				if (g.aArc(noeudPrec+1, noeudSucc+1)) {
-					listePredecesseurs[noeudSucc].add(noeudPrec);
-				}
+		// Insersion des prédécesseurs
+		for (String noeudSucc: g.noeuds()) {
+			predecesseurs.put(noeudSucc, new ArrayList<>());
+			for (String noeudPrec : g.noeuds()) {
+				if (g.aArc(noeudPrec, noeudSucc))
+					predecesseurs.get(noeudSucc).add(noeudPrec);
 			}
 		}
 		
-		return listePredecesseurs;
+		return predecesseurs;
 	}
 	
 	
-	private static int[][] triParNiveau(Igraph g) {
+	/**
+	 * 
+	 * @param g
+	 * @param distances Liste de la longueur des différants chemins
+	 * @param predecesseurs Prédecesseur de chaque noeud
+	 */
+	private static void triParNiveau(IGraph g, Map<String, Integer> distances, List<String> triParNiveau, String noeudDepart) {
 
-		ArrayList<Integer>[] listePredecesseurs = listePredecesseurs(g);
-		ArrayList<Integer> listeNoeudsTries = new ArrayList<>();
+		// Contient la liste de prédecesseur de chaque noeud
+		Map<String, List<String>> listePredecesseurs = listePredecesseurs(g);
 		
-
+		boolean truc = true;
+		int nbNoeudTriee = 0;	// Nombre de noeuds triée
 		
-//		for (int i=0; i<g.getNbNoeuds(); ++i) {
-//			System.out.print("\n"+String.valueOf((char)(i+1+64)) + " : ");
-//			for (int j=0; j<listePredecesseurs[i].size(); ++j)
-//				System.out.print(String.valueOf((char)(listePredecesseurs[i].get(j)+1+64)) + " ");
-//		}
+		distances.put(noeudDepart, 0);
 		
-		int[][] listeNoeudsDistancesPredecesseurs = new int[g.getNbNoeuds()][3];
-		int idxNoeudTriee = 0;
-		
-		for (int i=0; i<g.getNbNoeuds(); ++i) {
-			listeNoeudsDistancesPredecesseurs[i][0] = -100;
-			
-			if (!listePredecesseurs[i].isEmpty()) {
-				listeNoeudsDistancesPredecesseurs[i][1] = -100;
-			}
-		}
+		ArrayList<String> listeNoeudsSupprimes = new ArrayList<>();
 		
 		// On supprime les prédécesseurs qui sont déjà triés
-		while(idxNoeudTriee < g.getNbNoeuds()) { 
+		while(nbNoeudTriee < g.getNbNoeuds()) { 
+			ArrayList<String> listeNoeudsTries = new ArrayList<>();
 			
-			for (int i=0; i<g.getNbNoeuds(); ++i) {
-				if (listePredecesseurs[i].isEmpty()) {
-					listeNoeudsTries.add(i);
-					listePredecesseurs[i].add(-1);
-					listeNoeudsDistancesPredecesseurs[idxNoeudTriee++][0] = i;
+			nbNoeudTriee = nettoyagePredecesseurs(g, listePredecesseurs, listeNoeudsTries, triParNiveau, nbNoeudTriee);
+			
+			if (truc) {
+				if (listeNoeudsTries.contains(noeudDepart)) {
+					for (String i : triParNiveau)
+						listeNoeudsSupprimes.add(i);
+					triParNiveau.clear();
+					truc = false;
+					triParNiveau.add(noeudDepart);
+					listeNoeudsSupprimes.remove(noeudDepart);
 				}
-			}
-			
-			for (int i=0; i<g.getNbNoeuds(); ++i) {
-				for (int j : listeNoeudsTries) {
-					if (listePredecesseurs[i].contains(j)) {
-						listePredecesseurs[i].remove(Integer.valueOf(j));
-					}
-				}
-			}
-			
-			listeNoeudsTries.clear();
-		}
-		
-		
-//		for (int i=0; i<g.getNbNoeuds(); ++i) {
-//			System.out.print(String.valueOf((char)(listeNoeudsDistancesPredecesseurs[i][0]+1+64)) + " ");
-//		}
-		
-		return listeNoeudsDistancesPredecesseurs;
-	}
-	
-	
-	public static String algorithmeBellman(Igraph g, int numNoeudDepart, int numNoeudArrivee) throws CircuitAbsorbantEx {
-		if (!estOK(g)) {
-			throw new CircuitAbsorbantEx();
-		}
-		
-		int[][] listeNoeudsDistancesPredecesseurs = triParNiveau(g);
-		
-		for (int idxNoeudActuel=0; idxNoeudActuel<g.getNbNoeuds(); ++idxNoeudActuel) {
-			for (int idxNoeudPred=0; idxNoeudPred<idxNoeudActuel; ++idxNoeudPred) {
-				int vraiIdxActuel = listeNoeudsDistancesPredecesseurs[idxNoeudActuel][0];
-				int vraiIdxPred = listeNoeudsDistancesPredecesseurs[idxNoeudPred][0];
 				
-				if (g.aArc(vraiIdxPred+1, vraiIdxActuel+1) && (listeNoeudsDistancesPredecesseurs[idxNoeudActuel][1] == -100 || 
-						listeNoeudsDistancesPredecesseurs[idxNoeudActuel][1] > g.valeurArc(vraiIdxPred+1, vraiIdxActuel+1) + 
-							listeNoeudsDistancesPredecesseurs[idxNoeudPred][1])) {
-					listeNoeudsDistancesPredecesseurs[idxNoeudActuel][1] = g.valeurArc(vraiIdxPred+1, vraiIdxActuel+1) + 
-							listeNoeudsDistancesPredecesseurs[idxNoeudPred][1];
-					listeNoeudsDistancesPredecesseurs[idxNoeudActuel][2] = idxNoeudPred;
+				else {
+					for (String i : triParNiveau)
+						listeNoeudsSupprimes.add(i);
+					triParNiveau.clear();
+				}
+			}
+			
+			suppressionPredecesseurs(g, listePredecesseurs, listeNoeudsTries);
+		}
+	}
+
+
+	/*
+	 * 	Vérifie si toutes les conditions suivantes sont réunies :
+	 * 		- Il existe un arc entre le noeud "actuel" et le noeud actuellement testé
+	 *  	- L'une des conditions suivantes doit être remplie :
+	 * 			- Aucun chemin avec le noeud successeur n'a encore été calculé
+	 * 			- Le chemin testé est plus optimisé que le chemin actuel
+	 */
+	private static boolean peutRemplacerDistanceActuelle(IGraph g, Map<String, Integer> distances, String idxNoeudA, String idxNoeudPred, String noeudDepart) {
+		System.out.println("Predecesseur : " + idxNoeudPred + "\nSuccesseur : " + idxNoeudA);
+		return g.aArc(idxNoeudPred, idxNoeudA) && (!distances.containsKey(idxNoeudA) || 
+				distances.get(idxNoeudA) > g.getValeur(idxNoeudPred, idxNoeudA) + 
+				distances.get(idxNoeudPred));
+	}
+	
+	
+	public static String algorithmeBellman(IGraph g, String numNoeudDepart, String numNoeudArrivee) throws CircuitAbsorbantEx, NoPathEx {
+		if (!estOK(g)) { throw new CircuitAbsorbantEx(); }
+		
+		Map<String, Integer> distances = new HashMap<>();
+		Map<String, String> predecesseurs = new HashMap<>();
+		List<String> triParNiveau = new ArrayList<>();
+		
+		triParNiveau(g, distances, triParNiveau, numNoeudDepart);
+		if (numNoeudDepart.equals("B")) System.out.println(triParNiveau);
+		for (String idxNoeudA : triParNiveau) {
+			if (numNoeudDepart.equals("B")) System.out.println(idxNoeudA + " : ");
+			int idx = 0;
+			for (String idxNoeudPred = triParNiveau.get(idx); !idxNoeudPred.equals(idxNoeudA); idxNoeudPred = triParNiveau.get(++idx)) {
+				if (numNoeudDepart.equals("B")) System.out.println("    " + idxNoeudPred);
+				if (peutRemplacerDistanceActuelle(g, distances, idxNoeudA, idxNoeudPred, numNoeudDepart)) {
+					if (numNoeudDepart.equals("B")) System.out.println(distances);
+					if (numNoeudDepart.equals("B")) System.out.println(predecesseurs);
+					distances.put(idxNoeudA, g.getValeur(idxNoeudPred, idxNoeudA) + distances.get(idxNoeudPred));
+					predecesseurs.put(idxNoeudA, idxNoeudPred);
 				}
 			}
 		}
 		
-		return affichage(listeNoeudsDistancesPredecesseurs, numNoeudDepart-1, numNoeudArrivee-1);
+		return affichage(g, predecesseurs, numNoeudDepart, numNoeudArrivee);
 	}
 
 
-	private static String affichage(int[][] listeNoeudsDistancesPredecesseurs, int idxNoeudDepart, int idxNoeudArrivee) {
+	private static String affichage(IGraph g, Map<String, String> predecesseurs, String idxNoeudDepart, String idxNoeudArrivee) {
 		StringBuilder sb = new StringBuilder();
-		System.out.println("\n");
-		for (int i=0; i<listeNoeudsDistancesPredecesseurs.length; ++i) {
-			System.out.println(String.valueOf((char)(listeNoeudsDistancesPredecesseurs[i][0]+1+64)) + " : " +
-					listeNoeudsDistancesPredecesseurs[i][1] + "[" + String.valueOf((char)(listeNoeudsDistancesPredecesseurs[i][2]+1+64)) + "]");
-		}
 		
-		for (int i=0; i<listeNoeudsDistancesPredecesseurs.length; ++i) {
-			if (listeNoeudsDistancesPredecesseurs[i][0] == idxNoeudArrivee) {
-				do{
-					if (listeNoeudsDistancesPredecesseurs[i][0] != idxNoeudArrivee)
-						sb.insert(0,  " - ");
-					sb.insert(0, String.valueOf((char)(listeNoeudsDistancesPredecesseurs[i][0]+1 + 64)));
-					i = listeNoeudsDistancesPredecesseurs[i][2];
-				}while(listeNoeudsDistancesPredecesseurs[i][0] != -1);
-				
-				break;
-			}
+		String i = idxNoeudArrivee;
+		
+		while(i != null){
+			if (!i.equals(idxNoeudArrivee))
+				sb.insert(0,  " - ");
+			sb.insert(0, i);
+			i = predecesseurs.get(i);
 		}
 		
 		return sb.toString();
