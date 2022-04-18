@@ -76,7 +76,7 @@ public class PCCDijkstra {
 				predecesseurs.put(noeudSucc, noeudActuel);
 			}
 			
-			System.out.println("Noeud " + noeudSucc + " : " + distances.get(noeudSucc) + "[" + predecesseurs.get(noeudSucc) + "]");
+			//System.out.println("Noeud " + noeudSucc + " : " + distances.get(noeudSucc) + "[" + predecesseurs.get(noeudSucc) + "]");
 		
 			if (peutEtreLeProchainNoeud(distances, predecesseurs, noeudSucc, noeudSuivant, noeudActuel)){
 				noeudSuivant = noeudSucc;
@@ -85,7 +85,7 @@ public class PCCDijkstra {
 		
 		distances.put(noeudActuel, FIN);
 		
-		System.out.println("   -> Choix : " + noeudSuivant + "\n");
+		//System.out.println("   -> Choix : " + noeudSuivant + "\n");
 			
 		return noeudSuivant;
 	}
