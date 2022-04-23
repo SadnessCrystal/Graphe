@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import exceptions.CircuitAbsorbantEx;
 import exceptions.NoPathEx;
@@ -14,29 +13,24 @@ public class PCCBellman {
 	private PCCBellman() {
 		throw new IllegalStateException("Classe utilitaire");
 	}
-
-	// Penser à utiliser fonction recursive pour la suppression de predecesseur
-	// Penser à vérifier boucle foreach avec listePredecesseur
 	
 	/**
 	 * @brief
 	 * @param g Graphe
 	 * @param listePredecesseurs HashMap des prédecesseurs de chaque noeud
-	 * @param listeNoeudsTries Liste vide, contiendra la liste des noeuds triés
-	 * @param triParNiveau 
+	 * @param listeNoeudsTriesTemporaire Liste vide, contiendra la liste des noeuds triés
+	 * @param listeNoeudsParNiveau 
 	 * @param nbNoeudTriee Nombre de noeuds triés
 	 * @return
 	 */
-	private static int nettoyagePredecesseurs(IGraph g, Map<String, List<String>> listePredecesseurs, List<String> listeNoeudsTries, List<String> triParNiveau, int nbNoeudTriee) {
+	private static void nettoyagePredecesseurs(IGraph g, Map<String, List<String>> listePredecesseurs, List<String> listeNoeudsTriesTemporaire, List<String> listeNoeudsParNiveau) {
 		for (String i : g) {
 			if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).isEmpty()) {
-				listeNoeudsTries.add(i);
+				listeNoeudsTriesTemporaire.add(i);
 				listePredecesseurs.remove(i);
-				nbNoeudTriee++;
-				triParNiveau.add(i);
+				listeNoeudsParNiveau.add(i);
 			}
 		}
-		return nbNoeudTriee;
 	}
 	
 	
@@ -45,46 +39,39 @@ public class PCCBellman {
 	 * prédesesseurs de tous les autres noeuds
 	 * @param g Graphe
 	 * @param listePredecesseurs HashMap des prédecesseurs de chaque noeud
-	 * @param listeNoeudsTries Liste des noeuds venant d'être triés
+	 * @param listeNoeudsTriesTemporaire Liste des noeuds venant d'être triés
 	 */
-	private static void suppressionPredecesseurs(IGraph g, Map<String, List<String>> listePredecesseurs, List<String> listeNoeudsTries) {
+	private static void suppressionPredecesseurs(IGraph g, Map<String, List<String>> listePredecesseurs, List<String> listeNoeudsTriesTemporaire) {
 		for (String i : g) {
-			for (String j : listeNoeudsTries) {
+			for (String j : listeNoeudsTriesTemporaire) {
 				/* Si un noeud venant d'être trié est encore présent en tant que prédécesseur,
 				 * alors le supprimer de la liste des prédecesseurs */
-				if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(j)) {
+				if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(j))
 					listePredecesseurs.get(i).remove(j);
-				}
 			}
 		}
 	}
 	
 
 	public static boolean estOK(IGraph g) {
-		// Liste des noeuds triées par niveau
-		List<String> triParNiveau = new ArrayList<>();
-		
-		// Liste de prédecesseur de chaque noeud
-		Map<String, List<String>> listePredecesseurs = listePredecesseurs(g);
-		
-		int nbNoeudTriee = 0;	// Nombre de noeuds triée
+		List<String> listeNoeudsParNiveau = new ArrayList<>();// Liste des noeuds triées par niveau
+		Map<String, List<String>> listePredecesseurs = listePredecesseurs(g);// Liste de prédecesseur de chaque noeud
 				
 		// Tant qu'il existe des noeuds non triés
-		while(nbNoeudTriee < g.getNbNoeuds()) { 
-			// Liste temporaire de noeuds venant d'être attribué
-			ArrayList<String> listeNoeudsTries = new ArrayList<>();
+		while(listeNoeudsParNiveau.size() < g.getNbNoeuds()) { 
+			ArrayList<String> listeNoeudsTriesTemporaire = new ArrayList<>();// Liste temporaire de noeuds venant d'être attribué
+			
+			int nbNoeudTriee = listeNoeudsParNiveau.size();
 			
 			// Detection des noeuds de niveau supérieur
-			int tmp = nettoyagePredecesseurs(g, listePredecesseurs, listeNoeudsTries, triParNiveau, nbNoeudTriee);
+			nettoyagePredecesseurs(g, listePredecesseurs, listeNoeudsTriesTemporaire, listeNoeudsParNiveau);
 			
 			// Si aucun noeud n'a été trié, c'est la preuve d'un circuit
-			if (tmp - nbNoeudTriee == 0)
+			if (listeNoeudsParNiveau.size() == nbNoeudTriee)
 				return false;
 			
-			nbNoeudTriee = tmp;// Actualisation du nombre de noeuds
-			
 			// Suppression de la liste des prédecesseurs des noeuds venant d'être triés
-			suppressionPredecesseurs(g, listePredecesseurs, listeNoeudsTries);
+			suppressionPredecesseurs(g, listePredecesseurs, listeNoeudsTriesTemporaire);
 		}
 		// Si l'algorithme est parvenu jusque là, c'est la preuve de l'abscence de circuit.
 		return true;
@@ -92,48 +79,15 @@ public class PCCBellman {
 	
 	
 	private static Map<String, List<String>> listePredecesseurs(IGraph g){
-		/*
-		 * Tableau de nbNoeuds dont chaque case comporte la liste de
-		 * prédecesseur du noeud correspodnant
-		 */
 		Map<String, List<String>> predecesseurs = new HashMap<>();
-		
 		// Insersion des prédécesseurs
 		for (String noeudSucc: g) {
 			predecesseurs.put(noeudSucc, new ArrayList<>());
-			for (String noeudPrec : g) {
+			for (String noeudPrec : g)
 				if (g.aArc(noeudPrec, noeudSucc))
 					predecesseurs.get(noeudSucc).add(noeudPrec);
-			}
 		}
-		
 		return predecesseurs;
-	}
-	
-	
-	private static int planB(IGraph g, Map<String, List<String>> listePredecesseurs, List<String> triParNiveau, List<String> listeNoeudsTries, String noeudD, String noeudA, int nbNoeudTriee) throws NoPathEx{
-		for (String i : g) {
-			if (listePredecesseurs.containsKey(i)) {
-				for (String j : triParNiveau) {
-					if (listePredecesseurs.get(i).contains(j) && !j.equals(noeudD)) {
-						listePredecesseurs.get(i).remove(j);
-					}
-				}
-				
-				if (listePredecesseurs.get(i).isEmpty()) {
-					if (noeudA.equals(i)) { throw new NoPathEx(); }
-					
-					listeNoeudsTries.add(i);
-					listePredecesseurs.remove(i);
-					nbNoeudTriee++;
-				}
-			}
-		}
-		if (triParNiveau.contains(noeudA)) { throw new NoPathEx(); }
-		triParNiveau.clear();
-		triParNiveau.add(noeudD);
-		System.out.println("zidh");
-		return nbNoeudTriee;
 	}
 	
 	
@@ -141,35 +95,65 @@ public class PCCBellman {
 	 * 
 	 * @param g
 	 * @param distances
-	 * @param triParNiveau
+	 * @param listeNoeudsParNiveau
 	 * @param noeudD
 	 * @throws NoPathEx
 	 */
-	private static void triParNiveau(IGraph g, Map<String, Integer> distances, List<String> triParNiveau, String noeudD, String noeudA) throws NoPathEx{
-
+	private static void triParNiveau(IGraph g, Map<String, Integer> distances, List<String> listeNoeudsParNiveau, String noeudD, String noeudA) throws NoPathEx{
 		// Contient la liste de prédecesseur de chaque noeud
 		Map<String, List<String>> listePredecesseurs = listePredecesseurs(g);
-		
-		int nbNoeudTriee = 0;	// Nombre de noeuds triée
-		
 		distances.put(noeudD, 0);
 		
-		// On supprime les prédécesseurs qui sont déjà triés
-		while(nbNoeudTriee < g.getNbNoeuds()) { 
-			ArrayList<String> listeNoeudsTries = new ArrayList<>();
-			
-			nbNoeudTriee = nettoyagePredecesseurs(g, listePredecesseurs, listeNoeudsTries, triParNiveau, nbNoeudTriee);
-			
-			System.out.println(listePredecesseurs + " " + listeNoeudsTries + " " + triParNiveau);
-			
-			if (listeNoeudsTries.contains(noeudD)) {
-				nbNoeudTriee = planB(g, listePredecesseurs, triParNiveau, listeNoeudsTries, noeudD, noeudA, nbNoeudTriee);
+		listePredecesseurs.remove(noeudD);
+		
+		// Tant qu'il reste des ArrayList vides : 
+		while(listePredecesseurs.containsValue(new ArrayList<>())) {
+			for (String i : g) {
+				if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).isEmpty()) {
+					if (i.equals(noeudA))
+						throw new NoPathEx();
+					suppressionRecursive(g, listePredecesseurs, i, noeudA);
+				}
 			}
+		}
+		
+		listePredecesseurs.put(noeudD, new ArrayList<>());
+		
+		int nbNoeudTrieeMax = listePredecesseurs.size();
+		
+		// Tant qu'il existe des noeuds non triés
+		while(listeNoeudsParNiveau.size() < nbNoeudTrieeMax) { 
+			ArrayList<String> listeNoeudsTriesTemporaire = new ArrayList<>(); // Liste temporaire de noeuds venant d'être attribué
 			
-			suppressionPredecesseurs(g, listePredecesseurs, listeNoeudsTries);
+			// Detection des noeuds de niveau supérieur
+			nettoyagePredecesseurs(g, listePredecesseurs, listeNoeudsTriesTemporaire, listeNoeudsParNiveau);
+			
+			// Suppression de la liste des prédecesseurs des noeuds venant d'être triés
+			suppressionPredecesseurs(g, listePredecesseurs, listeNoeudsTriesTemporaire);
 		}
 	}
-
+	
+	
+	private static void suppressionRecursive(IGraph g, Map<String, List<String>> listePredecesseurs, String noeudASupprimer, String noeudA) {
+		assert(listePredecesseurs.get(noeudASupprimer).isEmpty());
+		
+		listePredecesseurs.remove(noeudASupprimer);
+		
+		// Parcourir la liste de prédecesseurs de noeuds.
+		for (String i : g) {
+			// Si le noeud à supprimer existe en tant que prédecesseur, le supprimer
+			if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(noeudASupprimer))
+				listePredecesseurs.get(i).remove(noeudASupprimer);
+			
+			if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(noeudASupprimer)) {
+				if (i.equals(noeudA))
+					throw new NoPathEx();
+				listePredecesseurs.remove(i); // Supprimer le noeud de la HashMap
+				suppressionRecursive(g, listePredecesseurs, i, noeudA);
+			}
+		}
+	}
+	
 
 	/*
 	 * 	Vérifie si toutes les conditions suivantes sont réunies :
@@ -186,39 +170,38 @@ public class PCCBellman {
 	
 	
 	public static String algorithmeBellman(IGraph g, String noeudD, String noeudA) throws CircuitAbsorbantEx, NoPathEx {
-		if (!estOK(g)) { throw new CircuitAbsorbantEx(); }
+		if (!estOK(g))
+			throw new CircuitAbsorbantEx();
 		
 		Map<String, Integer> distances = new HashMap<>();
 		Map<String, String> predecesseurs = new HashMap<>();
-		List<String> triParNiveau = new ArrayList<>();
+		List<String> listeNoeudsParNiveau = new ArrayList<>();
 		
-		triParNiveau(g, distances, triParNiveau, noeudD, noeudA);
-		for (String noeudS : triParNiveau) {
+		triParNiveau(g, distances, listeNoeudsParNiveau, noeudD, noeudA);
+		
+		for (String noeudS : listeNoeudsParNiveau) {
 			int idx = 0;
-			for (String noeudP = triParNiveau.get(idx); !noeudP.equals(noeudS); noeudP = triParNiveau.get(++idx)) {
+			for (String noeudP = listeNoeudsParNiveau.get(idx); !noeudP.equals(noeudS); noeudP = listeNoeudsParNiveau.get(++idx)) {
 				if (peutRemplacerDistanceActuelle(g, distances, noeudS, noeudP)) {
 					distances.put(noeudS, g.getValeur(noeudP, noeudS) + distances.get(noeudP));
 					predecesseurs.put(noeudS, noeudP);
 				}
 			}
 		}
-		
-		return affichage(g, predecesseurs, noeudD, noeudA);
+		return affichage(predecesseurs, noeudA);
 	}
 
 
-	private static String affichage(IGraph g, Map<String, String> predecesseurs, String idxNoeudDepart, String idxNoeudArrivee) {
+	private static String affichage(Map<String, String> predecesseurs, String noeudA) {
 		StringBuilder sb = new StringBuilder();
+		String noeud = noeudA;
 		
-		String i = idxNoeudArrivee;
-		
-		while(i != null){
-			if (!i.equals(idxNoeudArrivee))
+		while(noeud != null){
+			if (!noeud.equals(noeudA))
 				sb.insert(0,  " - ");
-			sb.insert(0, i);
-			i = predecesseurs.get(i);
+			sb.insert(0, noeud);
+			noeud = predecesseurs.get(noeud);
 		}
-		
 		return sb.toString();
 	}
 }

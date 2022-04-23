@@ -3,7 +3,6 @@ package graphes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 
@@ -14,6 +13,12 @@ public class GrapheLA implements IGraph{
 	private static class Arc  {
 		String cible;
 		int valeur;
+		
+		/**
+		 * @brief Constructeur de Arc
+		 * @param cible Successeur du noeud
+		 * @param valeur Valeur de l'arc
+		 */
 		Arc(String cible, int valeur) {
 			this.cible = cible;
 			this.valeur = valeur;
@@ -35,6 +40,10 @@ public class GrapheLA implements IGraph{
 		}
 	}
 
+	/**
+	 * @brief Constructeur de GrapheMA
+	 * @param labels Tableau des labels du graphe
+	 */
 	public GrapheLA(String[] labels) {
 		this.noeuds = new HashMap<>();
 		int nb = labels.length;
@@ -50,49 +59,56 @@ public class GrapheLA implements IGraph{
 		return la.size();
 	}
 	
+	@Override
 	public boolean estNoeudOK(String label) {
 		return noeuds.containsKey(label);
 	}
 	
+	@Override
 	public boolean estArcOK(String n1, String n2) {
 		return estNoeudOK(n1) && estNoeudOK(n2);
 	}
 	
 	@Override
-	public void ajouterArc(String label1, String label2, int valeur) {
-		assert ! aArc(label1,label2);
+	public void ajouterArc(String label1, String label2, int valeur) throws RuntimeException {
+		if (aArc(label1,label2))
+			throw new RuntimeException("Il existe déjà un arc entre " + label1 + " et " + label2);
 		int n1 = noeuds.get(label1);
 		la.get(n1).add(new Arc(label2, valeur));
 	}
 	
 	@Override
-	public boolean aArc(String label1, String label2) {
-		assert estArcOK(label1,label2);
+	public boolean aArc(String label1, String label2) throws IllegalArgumentException {
+		if (!estArcOK(label1, label2))
+			throw new IllegalArgumentException("L'un des labels entre " + label1 + " et " + label2 + "n'existent pas dans ce graphe");
 		int n1 = noeuds.get(label1);
 		return la.get(n1).contains(new Arc(label2, 0));
 	}
 	
 	@Override
 	public String toString() {
-		String s = "";
+		StringBuilder s = new StringBuilder();
 		for(String label1 : noeuds.keySet()) {
-			s+= label1 + " -> ";
+			s.append(label1 + " -> ");
 			for (Arc a : la.get(noeuds.get(label1)))
-				s+= a.cible + "("+ a.valeur + ") ";
-			s+="\n";
+				s.append(a.cible + "("+ a.valeur + ") ");
+			s.append("\n");
 		}
-		return s;
+		return s.toString();
 	}
 	
 	@Override
-	public int dOut(String label) {
-		assert estNoeudOK(label);
+	public int dOut(String label) throws IllegalArgumentException {
+		if (!estNoeudOK(label))
+			throw new IllegalArgumentException(label + " n'existe pas dans ce graphe");
 		return la.get(noeuds.get(label)).size();
 	}
 	
 	@Override
-	public int dIn(String label) {
-		assert estNoeudOK(label);
+	public int dIn(String label) throws IllegalArgumentException {
+		if (!estNoeudOK(label))
+			throw new IllegalArgumentException(label + " n'existe pas dans ce graphe");
+		
 		int d = 0;
 		Arc a = new Arc(label, 0);
 		for(int i = 0; i< la.size(); ++i)
@@ -101,9 +117,19 @@ public class GrapheLA implements IGraph{
 		return d;
 	}
 
+	/**
+	 * 
+	 * @param n1 Label du premier noeud
+	 * @param n2 Label du second noeud
+	 * @return Valeur du noeud entre le premier et le second noeud
+	 * @throws IllegalArgumentException Si aucun arc n'est trouvé entre le premier et le second noeud
+	 * @throws RuntimeException Si aucune valeur pour l'arc n'est trouvé
+	 */
 	@Override
-	public int getValeur(String n1, String n2) {
-		assert aArc(n1, n2);
+	public int getValeur(String n1, String n2) throws IllegalArgumentException, RuntimeException {
+		if (!aArc(n1, n2))
+			throw new IllegalArgumentException("Aucun arc entre " + n1 + " et " + n2);
+			
 		for (Arc a : la.get(noeuds.get(n1)))
 			if (a.cible.equals(n2))
 				return a.valeur;

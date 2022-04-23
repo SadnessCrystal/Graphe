@@ -1,9 +1,7 @@
 package graphes;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 public class GrapheMA implements IGraph {
@@ -12,6 +10,10 @@ public class GrapheMA implements IGraph {
 	private boolean[][] mab;
 	private int[][] mav;
 
+	/**
+	 * @brief Constructeur de GrapheMA
+	 * @param labels Tableau des labels du graphe
+	 */
 	public GrapheMA(String[] labels) {
 		this.labels = labels.clone();
 		this.noeuds = new HashMap<>();
@@ -36,8 +38,10 @@ public class GrapheMA implements IGraph {
 	}
 
 	@Override
-	public void ajouterArc(String label1, String label2, int valeur) {
-		assert ! aArc(label1,label2);
+	public void ajouterArc(String label1, String label2, int valeur) throws RuntimeException {
+		if (aArc(label1,label2))
+			throw new RuntimeException("Il existe déjà un arc entre " + label1 + " et " + label2);
+			
 		int n1 = noeuds.get(label1);
 		int n2 = noeuds.get(label2);
 		mab[n1][n2] = true;
@@ -60,20 +64,24 @@ public class GrapheMA implements IGraph {
 	}
 
 	@Override
-	public boolean aArc(String label1, String label2) {
-		assert estArcOK(label1,label2);
+	public boolean aArc(String label1, String label2) throws IllegalArgumentException {
+		if (!estArcOK(label1, label2))
+			throw new IllegalArgumentException("L'un des labels entre " + label1 + " et " + label2 + "n'existent pas dans ce graphe");
 		return mab[noeuds.get(label1)][noeuds.get(label2)];
 	}
 	
 	@Override
-	public int getValeur(String label1, String label2) {
-		assert estArcOK(label1, label2);
+	public int getValeur(String label1, String label2) throws IllegalArgumentException {
+		if (!estArcOK(label1, label2))
+			throw new IllegalArgumentException("L'un des labels entre " + label1 + " et " + label2 + "n'existent pas dans ce graphe");
 		return mav[noeuds.get(label1)][noeuds.get(label2)];
 	}
 
 	@Override
-	public int dOut(String label) {
-		assert estNoeudOK(label);
+	public int dOut(String label) throws IllegalArgumentException {
+		if (!estNoeudOK(label))
+			throw new IllegalArgumentException(label + " n'existe pas dans ce graphe");
+		
 		int n1 = noeuds.get(label);
 		int degre = 0;
 		for (int n2 = 0; n2 < getNbNoeuds(); ++n2)
@@ -83,8 +91,10 @@ public class GrapheMA implements IGraph {
 	}
 
 	@Override
-	public int dIn(String label) {
-		assert estNoeudOK(label);
+	public int dIn(String label) throws IllegalArgumentException {
+		if (!estNoeudOK(label))
+			throw new IllegalArgumentException(label + " n'existe pas dans ce graphe");
+		
 		int n2 = noeuds.get(label);
 		int degre = 0;
 		for (int n1 = 0; n1 < getNbNoeuds(); ++n1)
@@ -97,5 +107,4 @@ public class GrapheMA implements IGraph {
 	public Iterator<String> iterator() {
 		return noeuds.keySet().iterator();
 	}
-
 }

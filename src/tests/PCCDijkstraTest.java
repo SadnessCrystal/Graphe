@@ -13,8 +13,7 @@ import exceptions.NoPathEx;
 public class PCCDijkstraTest {
 	@Test
 	public void exo3_1_1() {
-		//String[] noeuds = {"A", "B", "C", "D", "E", "F", "G", "H", "I"};
-		String[] noeuds = {"I", "H", "G", "F", "E", "D", "C", "B", "A"};
+		String[] noeuds = {"A", "B", "C", "D", "E", "F", "G", "H", "I"};
 		IGraph g = new GrapheMA(noeuds);
 
         g.ajouterArc("A", "C", 2);      // A -> C (2)
@@ -85,61 +84,12 @@ public class PCCDijkstraTest {
         assertThrows(NoPathEx.class, () -> PCCDijkstra.algorithmeDijkstra(g, "D", "I"));
 }
 	
-	
-	@Test
-	public void exo3_2() {
-		//String[] noeuds = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
-
-		String[] noeuds = {"J", "I", "H", "G", "F", "E", "D", "C", "B", "A"};
-		IGraph g = new GrapheMA(noeuds);
-
-
-        g.ajouterArc("A", "B", 8);      // A -> B (8)
-        g.ajouterArc("A", "D", 3);      // A -> D (3)
-
-        g.ajouterArc("B", "C", 4);      // B -> C (4)
-        g.ajouterArc("B", "E", 5);      // B -> E (5)
-
-        g.ajouterArc("C", "F", 1);      // C -> F (1)
-        g.ajouterArc("C", "I", 5);      // C -> I (5)
-
-        g.ajouterArc("D", "E", 2);      // D -> E (2)
-        g.ajouterArc("D", "J", 1);      // D -> J (1)
-
-        g.ajouterArc("E", "G", 3);      // E -> G (3)
-        g.ajouterArc("E", "I", 2);      // E -> I (2)
-
-        g.ajouterArc("F", "H", 5);      // F -> H (5)
-
-        g.ajouterArc("G", "H", 4);      // G -> H (4)
-
-        g.ajouterArc("I", "H", 2);      // I -> H (2)
-
-        g.ajouterArc("J", "F", 6);      // J -> F (6)
-        g.ajouterArc("J", "G", 6);      // J -> G (6)
-		
-		assertTrue(PCCDijkstra.estOK(g));
-
-        assertEquals(PCCDijkstra.algorithmeDijkstra(g, "A", "B"), "A - B");
-        assertEquals(PCCDijkstra.algorithmeDijkstra(g, "A", "C"), "A - B - C");
-        assertEquals(PCCDijkstra.algorithmeDijkstra(g, "A", "D"), "A - D");
-        assertEquals(PCCDijkstra.algorithmeDijkstra(g, "A", "E"), "A - D - E");
-        assertEquals(PCCDijkstra.algorithmeDijkstra(g, "A", "F"), "A - D - J - F");
-        assertEquals(PCCDijkstra.algorithmeDijkstra(g, "A", "G"), "A - D - E - G");
-        assertEquals(PCCDijkstra.algorithmeDijkstra(g, "A", "H"), "A - D - E - I - H");
-        assertEquals(PCCDijkstra.algorithmeDijkstra(g, "A", "I"), "A - D - E - I");
-        assertEquals(PCCDijkstra.algorithmeDijkstra(g, "A", "J"), "A - D - J");
-        System.out.print(PCCDijkstra.algorithmeDijkstra(g, "B", "F"));
-	}
-	
 	@Test
 	public void exo3_6_1() {
-		//String[] noeuds = {"A", "B", "C", "D", "E", "F", "G"};
-
-		String[] noeuds = {"G", "F", "E", "D", "C", "B", "A"};
+		String[] noeuds = {"A", "B", "C", "D", "E", "F", "G"};
 		IGraph g = new GrapheLA(noeuds);
 		
-        g.ajouterArc("A", "B", 3);      // A -> B (7)
+        g.ajouterArc("A", "B", 7);      // A -> B (7)
         g.ajouterArc("A", "C", 1);      // A -> C (1)
 
         g.ajouterArc("B", "D", 4);      // B -> D (4)

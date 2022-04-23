@@ -67,7 +67,7 @@ class GrapheTest {
 		
 		System.out.println(g);
 		
-		StringBuffer s = new StringBuffer();
+		StringBuilder s = new StringBuilder();
 		for (String noeud : g) 
 			s.append(noeud + " ");
 		System.out.println(s);

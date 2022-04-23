@@ -76,7 +76,7 @@ public class PCCDijkstra {
 	 * @param noeudS Noeud successeur à noeudP
 	 * @return true si les conditions sont réunies, false sinon
 	 */
-	private static boolean peutRemplacerLaDistanceActuelle(IGraph g, 
+	private static boolean peutRemplacerDistanceActuelle(IGraph g, 
 			Map<String, Integer> distances, String noeudP, String noeudS) {
 		return 	g.aArc(noeudP, noeudS) && (distances.get(noeudS) ==
 				NON_CALCULE || distances.get(noeudS) >
@@ -131,7 +131,7 @@ public class PCCDijkstra {
 		
 		// On parcourt tous les noeuds qui n'ont pas été mis de côté
 		for (String noeudS : distances.keySet()) {
-			if (peutRemplacerLaDistanceActuelle(g, distances, noeudP, noeudS)) {
+			if (peutRemplacerDistanceActuelle(g, distances, noeudP, noeudS)) {
 				distances.put(noeudS, g.getValeur(noeudP, noeudS) + distances.get(noeudP));
 				predecesseurs.put(noeudS, noeudP);
 			}
@@ -168,7 +168,6 @@ public class PCCDijkstra {
 			else
 				break;
 		}
-		
 		return sb.toString();
 	}
 	
@@ -179,10 +178,9 @@ public class PCCDijkstra {
 	 * @param noeudD Noeud de départ
 	 * @param noeudA Noeud d'arrivée
 	 * @return Le chemin le plus court entre noeudD et noeudA
-	 * @throws ArcNégatifEx Présence d'au moins un arc négatif dans le graphe,
-	 * 					    impossible de calculer le moindre chemin
-	 * @throws NoPathEx Aucun chemin entre le noeud de départ et le noeud
-	 * 					 d'arrivé trouvé
+	 * @throws ArcNégatifEx S'il existe au moins un arc négatif dans le graphe
+	 * @throws NoPathEx Si aucun chemin entre le noeud de départ et le noeud
+	 * 					d'arrivé n'est trouvé
 	 */
 	public static String algorithmeDijkstra(IGraph g, String noeudD, String noeudA)
 											throws ArcNégatifEx, NoPathEx {
@@ -200,16 +198,18 @@ public class PCCDijkstra {
 		/* Tant que le noeud d'arrivée n'a pas la certitude d'avoir eu le chemin
 		   le plus court, poursuivre l'algorithme */
 		while(distances.containsKey(noeudA)) {
-			/* Si aucun noeud n'a été choisi comme prochain noeud de calcul
+			/* 
+			 * Si aucun noeud n'a été choisi comme prochain noeud de calcul
 			 * et que le noeud d'arrivée n'a pas encore trouvé de chemin
 			 * certifié optimisé, alors il n'y a pas de chemins atteignable
-			 * pour le noeud d'arrivé */
-			if (noeudActuel == null) { throw new NoPathEx(); }
+			 * pour le noeud d'arrivé
+			 */
+			if (noeudActuel == null)
+				throw new NoPathEx();
 			
 			// On actualise en permanence le noeud "actuel"
 			noeudActuel = choixNoeudSuivant(g, distances, predecesseurs, noeudActuel);
 		}
-		
 		return affichage(predecesseurs, noeudD, noeudA);
 	}
 }
