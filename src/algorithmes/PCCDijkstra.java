@@ -5,30 +5,23 @@ import java.util.Map;
 
 import exceptions.ArcNégatifEx;
 import exceptions.NoPathEx;
-import graphes.IGraph;
+import graphes.IGraphe;
 
-public class PCCDijkstra {
+public class PCCDijkstra implements PCC {
 	// Nombre indiquant l'absence de calcul de la distance pour le noeud concerné
 	private static final int NON_CALCULE = -100;
-	
-	
-	private PCCDijkstra() {
-		throw new IllegalStateException("Classe utilitaire");
-	}
-	
 	
 	/**
 	 * @brief Indique si l'algorithme de Dijkstra peut ici être appliqué
 	 * @param g Le graphe
 	 * @return true si applicable, false sinon
 	 */
-	public static boolean estOK(IGraph g) {
-		for (String i : g) {
-			for (String j : g) {
-				if (g.aArc(i, j) && g.getValeur(i, j) < 0)
+	@Override
+	public boolean estOK(IGraphe g) {
+		for (Integer i : g)
+			for (Integer j : g)
+				if (g.aArc(i, j) && g.getValuation(i, j) < 0)
 					return false;
-			}
-		}
 		return true;
 	}
 	
@@ -41,15 +34,14 @@ public class PCCDijkstra {
 	 * 		   de départ en indéterminée (sauf le noeud de départ, fixée à 0) et
 	 * 		   le noeud en clé
 	 */
-	private static Map<String, Integer> initialisationDistances(IGraph g,
-											String noeudD){
-		Map<String, Integer> distances = new HashMap<>();
+	private static Map<Integer, Integer> initialisationDistances(IGraphe g,
+											Integer noeudD){
+		HashMap<Integer, Integer> distances = new HashMap<>();
 		
 		// Rempli le tableau de distance à "l'infini"
-		for (String i : g) {
-			if (!i.equals(noeudD))
+		for (Integer i : g)
+			if (i != noeudD)
 				distances.put(i, NON_CALCULE);
-		}
 		
 		/* La longueur du chemin pour le noeud de départ est mis à 0
 		 * pour faciliter l'implémentation de l'algorithme
@@ -76,11 +68,11 @@ public class PCCDijkstra {
 	 * @param noeudS Noeud successeur à noeudP
 	 * @return true si les conditions sont réunies, false sinon
 	 */
-	private static boolean peutRemplacerDistanceActuelle(IGraph g, 
-			Map<String, Integer> distances, String noeudP, String noeudS) {
+	private static boolean peutRemplacerDistanceActuelle(IGraphe g, 
+			Map<Integer, Integer> distances, Integer noeudP, Integer noeudS) {
 		return 	g.aArc(noeudP, noeudS) && (distances.get(noeudS) ==
 				NON_CALCULE || distances.get(noeudS) >
-				g.getValeur(noeudP, noeudS) + distances.get(noeudP));
+				g.getValuation(noeudP, noeudS) + distances.get(noeudP));
 	}
 	
 	
@@ -103,8 +95,8 @@ public class PCCDijkstra {
 	 * @param noeudSuiv Noeud actuellement choisi pour être le suivant
 	 * @return true si les conditions sont réunies, false sinon
 	 */
-	private static boolean peutEtreLeProchainNoeud(Map<String, Integer> distances,
-							String noeudP, String noeudSucc, String noeudSuiv) {
+	private static boolean peutEtreLeProchainNoeud(Map<Integer, Integer> distances,
+							Integer noeudP, Integer noeudSucc, Integer noeudSuiv) {
 		return distances.get(noeudSucc) != NON_CALCULE &&
 				!noeudP.equals(noeudSucc) && (noeudSuiv == null || 
 				distances.get(noeudSuiv) > distances.get(noeudSucc));
@@ -120,19 +112,20 @@ public class PCCDijkstra {
 	 * @param predecesseurs HashMap des prédécesseurs des noeuds en clé
 	 * @param noeudP Le noeud précédant (le noeud de départ si c'est la première
 	 * 				 boucle, le noeudSuivant précédant sinon)
+	 * @param noeudA : ???
 	 * @return noeudSuivant, le noeud suivant
 	 */
-	private static String choixNoeudSuivant(IGraph g, Map<String, Integer> distances,
-							Map<String, String> predecesseurs, String noeudP){
+	private static Integer choixNoeudSuivant(IGraphe g, Map<Integer, Integer> distances,
+							Map<Integer, Integer> predecesseurs, Integer noeudP, Integer noeudA){
 		// Impossible de prendre un noeud déjà terminé
 		assert(distances.containsKey(noeudP));
 		
-		String noeudSuivant = null; // Aucun noeud suivant n'est choisi par défaut
+		Integer noeudSuivant = null; // Aucun noeud suivant n'est choisi par défaut
 		
 		// On parcourt tous les noeuds qui n'ont pas été mis de côté
-		for (String noeudS : distances.keySet()) {
+		for (Integer noeudS : distances.keySet()) {
 			if (peutRemplacerDistanceActuelle(g, distances, noeudP, noeudS)) {
-				distances.put(noeudS, g.getValeur(noeudP, noeudS) + distances.get(noeudP));
+				distances.put(noeudS, g.getValuation(noeudP, noeudS) + distances.get(noeudP));
 				predecesseurs.put(noeudS, noeudP);
 			}
 			
@@ -142,7 +135,8 @@ public class PCCDijkstra {
 		}
 		
 		// Mit de côté, il n'est plus utile
-		distances.remove(noeudP);
+		if (!noeudP.equals(noeudA))
+			distances.remove(noeudP);
 			
 		return noeudSuivant;
 	}
@@ -153,22 +147,22 @@ public class PCCDijkstra {
 	 * @param noeudA Noeud d'arrivée
 	 * @return Le chemin du noeud de départ au noeud d'arrivée
 	 */
-	private static String affichage(Map<String, String> predecesseurs,
-							String noeudD, String noeudA) {
+	private static String affichage(Map<Integer, Integer> predecesseurs,
+							Integer noeudD, Integer noeudA, Integer distance) {
 		StringBuilder sb = new StringBuilder();
 		
-		String i = noeudA;
+		Integer i = noeudA;
 		
 		while(true){
-			if (!i.equals(noeudA))
-				sb.insert(0,  " - ");
+			sb.insert(0,  " ");
 			sb.insert(0, i);
 			if (!i.equals(noeudD))
 				i = predecesseurs.get(i);
 			else
 				break;
 		}
-		return sb.toString();
+		return "Dijkstra" + System.lineSeparator()
+		+ distance + System.lineSeparator() + sb.toString();
 	}
 	
 	
@@ -182,34 +176,36 @@ public class PCCDijkstra {
 	 * @throws NoPathEx Si aucun chemin entre le noeud de départ et le noeud
 	 * 					d'arrivé n'est trouvé
 	 */
-	public static String algorithmeDijkstra(IGraph g, String noeudD, String noeudA)
+	@Override
+	public String algorithme(IGraphe g, Integer noeudD, Integer noeudA)
 											throws ArcNégatifEx, NoPathEx {
 		if (!estOK(g)) { throw new ArcNégatifEx(); }
 		
 		// HashMap des longueurs de chemins pour chaque noeud
-		Map<String, Integer> distances = initialisationDistances(g, noeudD);
+		Map<Integer, Integer> distances = initialisationDistances(g, noeudD);
 		
 		// HashMap de prédécecesseur de chaque noeud
-		Map<String, String> predecesseurs = new HashMap<>();
+		Map<Integer, Integer> predecesseurs = new HashMap<>();
 		
 		// Noeud sur lequel sera calculé les longueur des chemins
-		String noeudActuel = noeudD;
+		Integer noeudActuel = noeudD;
 		
 		/* Tant que le noeud d'arrivée n'a pas la certitude d'avoir eu le chemin
 		   le plus court, poursuivre l'algorithme */
-		while(distances.containsKey(noeudA)) {
+		while(noeudActuel != noeudA) {
+			//System.out.println(distances + " " + predecesseurs);
 			/* 
 			 * Si aucun noeud n'a été choisi comme prochain noeud de calcul
 			 * et que le noeud d'arrivée n'a pas encore trouvé de chemin
 			 * certifié optimisé, alors il n'y a pas de chemins atteignable
-			 * pour le noeud d'arrivé
+			 * pour le noeud d'arrivée
 			 */
 			if (noeudActuel == null)
 				throw new NoPathEx();
 			
 			// On actualise en permanence le noeud "actuel"
-			noeudActuel = choixNoeudSuivant(g, distances, predecesseurs, noeudActuel);
+			noeudActuel = choixNoeudSuivant(g, distances, predecesseurs, noeudActuel, noeudA);
 		}
-		return affichage(predecesseurs, noeudD, noeudA);
+		return affichage(predecesseurs, noeudD, noeudA, distances.get(noeudA));
 	}
 }

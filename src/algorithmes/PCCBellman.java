@@ -7,13 +7,9 @@ import java.util.Map;
 
 import exceptions.CircuitAbsorbantEx;
 import exceptions.NoPathEx;
-import graphes.IGraph;
+import graphes.IGraphe;
 
-public class PCCBellman {
-	private PCCBellman() {
-		throw new IllegalStateException("Classe utilitaire");
-	}
-	
+public class PCCBellman implements PCC {
 	/**
 	 * @brief
 	 * @param g Graphe
@@ -23,8 +19,8 @@ public class PCCBellman {
 	 * @param nbNoeudTriee Nombre de noeuds triés
 	 * @return
 	 */
-	private static void nettoyagePredecesseurs(IGraph g, Map<String, List<String>> listePredecesseurs, List<String> listeNoeudsTriesTemporaire, List<String> listeNoeudsParNiveau) {
-		for (String i : g) {
+	private static void nettoyagePredecesseurs(IGraphe g, Map<Integer, List<Integer>> listePredecesseurs, List<Integer> listeNoeudsTriesTemporaire, List<Integer> listeNoeudsParNiveau) {
+		for (Integer i : g) {
 			if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).isEmpty()) {
 				listeNoeudsTriesTemporaire.add(i);
 				listePredecesseurs.remove(i);
@@ -41,27 +37,30 @@ public class PCCBellman {
 	 * @param listePredecesseurs HashMap des prédecesseurs de chaque noeud
 	 * @param listeNoeudsTriesTemporaire Liste des noeuds venant d'être triés
 	 */
-	private static void suppressionPredecesseurs(IGraph g, Map<String, List<String>> listePredecesseurs, List<String> listeNoeudsTriesTemporaire) {
-		for (String i : g) {
-			for (String j : listeNoeudsTriesTemporaire) {
+	private static void suppressionPredecesseurs(IGraphe g, Map<Integer, List<Integer>> listePredecesseurs, List<Integer> listeNoeudsTriesTemporaire) {
+		for (Integer i : g) {
+			for (int j : listeNoeudsTriesTemporaire) {
 				/* Si un noeud venant d'être trié est encore présent en tant que prédécesseur,
 				 * alors le supprimer de la liste des prédecesseurs */
+				//System.out.println(listePredecesseurs.containsKey(10) && listePredecesseurs.get(10).contains(8));
 				if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(j))
-					listePredecesseurs.get(i).remove(j);
+					listePredecesseurs.get(i).remove(Integer.valueOf(j));
 			}
 		}
 	}
 	
-
-	public static boolean estOK(IGraph g) {
-		List<String> listeNoeudsParNiveau = new ArrayList<>();// Liste des noeuds triées par niveau
-		Map<String, List<String>> listePredecesseurs = listePredecesseurs(g);// Liste de prédecesseur de chaque noeud
+	@Override
+	public boolean estOK(IGraphe g) {
+		List<Integer> listeNoeudsParNiveau = new ArrayList<>();// Liste des noeuds triées par niveau
+		Map<Integer, List<Integer>> listePredecesseurs = listePredecesseurs(g);// Liste de prédecesseur de chaque noeud
 				
 		// Tant qu'il existe des noeuds non triés
-		while(listeNoeudsParNiveau.size() < g.getNbNoeuds()) { 
-			ArrayList<String> listeNoeudsTriesTemporaire = new ArrayList<>();// Liste temporaire de noeuds venant d'être attribué
+		while(listeNoeudsParNiveau.size() < g.getNbSommets()) { 
+			ArrayList<Integer> listeNoeudsTriesTemporaire = new ArrayList<>();// Liste temporaire de noeuds venant d'être attribué
 			
 			int nbNoeudTriee = listeNoeudsParNiveau.size();
+			
+			//System.out.println("Avant : " + listePredecesseurs + " " + listeNoeudsParNiveau);
 			
 			// Detection des noeuds de niveau supérieur
 			nettoyagePredecesseurs(g, listePredecesseurs, listeNoeudsTriesTemporaire, listeNoeudsParNiveau);
@@ -69,6 +68,8 @@ public class PCCBellman {
 			// Si aucun noeud n'a été trié, c'est la preuve d'un circuit
 			if (listeNoeudsParNiveau.size() == nbNoeudTriee)
 				return false;
+			
+			//System.out.println("Après : " + listePredecesseurs + " " + listeNoeudsParNiveau + " (" + listeNoeudsTriesTemporaire + ")");
 			
 			// Suppression de la liste des prédecesseurs des noeuds venant d'être triés
 			suppressionPredecesseurs(g, listePredecesseurs, listeNoeudsTriesTemporaire);
@@ -78,12 +79,12 @@ public class PCCBellman {
 	}
 	
 	
-	private static Map<String, List<String>> listePredecesseurs(IGraph g){
-		Map<String, List<String>> predecesseurs = new HashMap<>();
+	private static Map<Integer, List<Integer>> listePredecesseurs(IGraphe g){
+		Map<Integer, List<Integer>> predecesseurs = new HashMap<>();
 		// Insersion des prédécesseurs
-		for (String noeudSucc: g) {
+		for (Integer noeudSucc : g) {
 			predecesseurs.put(noeudSucc, new ArrayList<>());
-			for (String noeudPrec : g)
+			for (Integer noeudPrec : g)
 				if (g.aArc(noeudPrec, noeudSucc))
 					predecesseurs.get(noeudSucc).add(noeudPrec);
 		}
@@ -99,18 +100,18 @@ public class PCCBellman {
 	 * @param noeudD
 	 * @throws NoPathEx
 	 */
-	private static void triParNiveau(IGraph g, Map<String, Integer> distances, List<String> listeNoeudsParNiveau, String noeudD, String noeudA) throws NoPathEx{
+	private static void triParNiveau(IGraphe g, Map<Integer, Integer> distances, List<Integer> listeNoeudsParNiveau, Integer noeudD, Integer noeudA) throws NoPathEx{
 		// Contient la liste de prédecesseur de chaque noeud
-		Map<String, List<String>> listePredecesseurs = listePredecesseurs(g);
+		Map<Integer, List<Integer>> listePredecesseurs = listePredecesseurs(g);
 		distances.put(noeudD, 0);
 		
 		listePredecesseurs.remove(noeudD);
 		
 		// Tant qu'il reste des ArrayList vides : 
 		while(listePredecesseurs.containsValue(new ArrayList<>())) {
-			for (String i : g) {
+			for (Integer i : g) {
 				if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).isEmpty()) {
-					if (i.equals(noeudA))
+					if (i == noeudA)
 						throw new NoPathEx();
 					suppressionRecursive(g, listePredecesseurs, i, noeudA);
 				}
@@ -123,7 +124,7 @@ public class PCCBellman {
 		
 		// Tant qu'il existe des noeuds non triés
 		while(listeNoeudsParNiveau.size() < nbNoeudTrieeMax) { 
-			ArrayList<String> listeNoeudsTriesTemporaire = new ArrayList<>(); // Liste temporaire de noeuds venant d'être attribué
+			ArrayList<Integer> listeNoeudsTriesTemporaire = new ArrayList<>(); // Liste temporaire de noeuds venant d'être attribué
 			
 			// Detection des noeuds de niveau supérieur
 			nettoyagePredecesseurs(g, listePredecesseurs, listeNoeudsTriesTemporaire, listeNoeudsParNiveau);
@@ -134,19 +135,19 @@ public class PCCBellman {
 	}
 	
 	
-	private static void suppressionRecursive(IGraph g, Map<String, List<String>> listePredecesseurs, String noeudASupprimer, String noeudA) {
+	private static void suppressionRecursive(IGraphe g, Map<Integer, List<Integer>> listePredecesseurs, Integer noeudASupprimer, Integer noeudA) {
 		assert(listePredecesseurs.get(noeudASupprimer).isEmpty());
 		
 		listePredecesseurs.remove(noeudASupprimer);
 		
 		// Parcourir la liste de prédecesseurs de noeuds.
-		for (String i : g) {
+		for (Integer i : g) {
 			// Si le noeud à supprimer existe en tant que prédecesseur, le supprimer
 			if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(noeudASupprimer))
 				listePredecesseurs.get(i).remove(noeudASupprimer);
 			
 			if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(noeudASupprimer)) {
-				if (i.equals(noeudA))
+				if (i == noeudA)
 					throw new NoPathEx();
 				listePredecesseurs.remove(i); // Supprimer le noeud de la HashMap
 				suppressionRecursive(g, listePredecesseurs, i, noeudA);
@@ -162,46 +163,46 @@ public class PCCBellman {
 	 * 			- Aucun chemin avec le noeud successeur n'a encore été calculé
 	 * 			- Le chemin testé est plus optimisé que le chemin actuel
 	 */
-	private static boolean peutRemplacerDistanceActuelle(IGraph g, Map<String, Integer> distances, String noeudS, String noeudP) {
+	private static boolean peutRemplacerDistanceActuelle(IGraphe g, Map<Integer, Integer> distances, Integer noeudS, Integer noeudP) {
 		return g.aArc(noeudP, noeudS) && (!distances.containsKey(noeudS) || 
-				distances.get(noeudS) > g.getValeur(noeudP, noeudS) + 
+				distances.get(noeudS) > g.getValuation(noeudP, noeudS) + 
 				distances.get(noeudP));
 	}
 	
-	
-	public static String algorithmeBellman(IGraph g, String noeudD, String noeudA) throws CircuitAbsorbantEx, NoPathEx {
+	@Override
+	public String algorithme(IGraphe g, Integer noeudD, Integer noeudA) throws CircuitAbsorbantEx, NoPathEx {
 		if (!estOK(g))
 			throw new CircuitAbsorbantEx();
 		
-		Map<String, Integer> distances = new HashMap<>();
-		Map<String, String> predecesseurs = new HashMap<>();
-		List<String> listeNoeudsParNiveau = new ArrayList<>();
+		Map<Integer, Integer> distances = new HashMap<>();
+		Map<Integer, Integer> predecesseurs = new HashMap<>();
+		List<Integer> listeNoeudsParNiveau = new ArrayList<>();
 		
 		triParNiveau(g, distances, listeNoeudsParNiveau, noeudD, noeudA);
 		
-		for (String noeudS : listeNoeudsParNiveau) {
-			int idx = 0;
-			for (String noeudP = listeNoeudsParNiveau.get(idx); !noeudP.equals(noeudS); noeudP = listeNoeudsParNiveau.get(++idx)) {
+		for (Integer noeudS : listeNoeudsParNiveau) {
+			for (int idx = 0, noeudP = listeNoeudsParNiveau.get(idx); noeudP != noeudS; noeudP = listeNoeudsParNiveau.get(++idx)) {
 				if (peutRemplacerDistanceActuelle(g, distances, noeudS, noeudP)) {
-					distances.put(noeudS, g.getValeur(noeudP, noeudS) + distances.get(noeudP));
+					distances.put(noeudS, g.getValuation(noeudP, noeudS) + distances.get(noeudP));
 					predecesseurs.put(noeudS, noeudP);
-				}
+				}	
 			}
 		}
-		return affichage(predecesseurs, noeudA);
+		
+		return affichage(predecesseurs, noeudA, distances.get(noeudA));
 	}
 
 
-	private static String affichage(Map<String, String> predecesseurs, String noeudA) {
+	private static String affichage(Map<Integer, Integer> predecesseurs, Integer noeudA, Integer distance) {
 		StringBuilder sb = new StringBuilder();
-		String noeud = noeudA;
+		Integer noeud = noeudA;
 		
 		while(noeud != null){
-			if (!noeud.equals(noeudA))
-				sb.insert(0,  " - ");
+			sb.insert(0,  " ");
 			sb.insert(0, noeud);
 			noeud = predecesseurs.get(noeud);
 		}
-		return sb.toString();
+		return "Bellman sans circuit" + System.lineSeparator()
+		+ distance + System.lineSeparator() + sb.toString();
 	}
 }
