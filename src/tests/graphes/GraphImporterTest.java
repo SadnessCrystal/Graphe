@@ -6,19 +6,19 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import graphes.ihm.Arc;
-import graphes.ihm.GraphImporter;
+import graphes.ihm.GrapheImporter;
 
 class GraphImporterTest {
 
 	@Test
 	void test() {
-		Arc a = GraphImporter.parse("1 -5 3");
+		Arc a = GrapheImporter.parse("1 -5 3");
 		assertEquals(1, a.getSource());
 		assertEquals(3, a.getDestination());
 		assertEquals(-5, a.getValuation());
-		Assertions.assertThrows( IllegalArgumentException.class, () -> {
-	           GraphImporter.parse("a1 -5 3");
-	  });
+		Assertions.assertThrows( IllegalArgumentException.class, () -> 
+	           GrapheImporter.parse("a1 -5 3")
+	  );
 
 	}
 	

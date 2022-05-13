@@ -5,13 +5,14 @@ import java.util.List;
 
 public class GrapheLA extends Graphe{
 	private static class Stub {
-		public int valuation, cible;
+		public int valuation;
+		public int cible;
 		public Stub (int valuation, int cible) {
 			this.valuation = valuation;
 			this.cible = cible;
 		}
 	}
-	private	List<Stub> la[];
+	private	List<Stub>[] la;
 	
 	@SuppressWarnings("unchecked")
 	public GrapheLA(int nbNoeuds) {
@@ -36,6 +37,7 @@ public class GrapheLA extends Graphe{
 		return INFINI;
 	}
 
+	@Override
 	public void ajouterArc(int a, int v, int b) {
 		assert ! aArc(a,b);
 		la[a-1].add(new Stub(v, b));
@@ -44,13 +46,13 @@ public class GrapheLA extends Graphe{
 
 	@Override
 	public String toString() {
-		String str = "";
+		StringBuilder str = new StringBuilder();
 		for(int i = 0; i< la.length; ++i) {
-			str += (i+1) + " =>";
+			str.append((i+1) + " =>");
 			for (Stub s : la[i]) 
-				str += " "+s.cible + "("+s.valuation+")";
-			str +="\n";
+				str.append(" "+s.cible + "("+s.valuation+")");
+			str.append("\n");
 		}
-		return str;
+		return str.toString();
 	}
 }

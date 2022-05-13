@@ -3,8 +3,6 @@ package graphes.types;
 import graphes.IGraphe;
 
 public abstract class Graphe implements IGraphe {
-	protected final static int INFINI = Integer.MAX_VALUE;
-	
 	public boolean estNoeudOK(int n) {
 		return n >= 1 && n <= getNbSommets();
 	}
@@ -17,5 +15,4 @@ public abstract class Graphe implements IGraphe {
 	public boolean aArc(int a, int b) {
 		return getValuation(a,b) != INFINI;
 	}
-	
 }

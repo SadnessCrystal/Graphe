@@ -1,13 +1,15 @@
-package algorithmes;
+package pcc;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import exceptions.ArcNégatifEx;
 import exceptions.NoPathEx;
 import graphes.IGraphe;
+import graphes.IPCC;
 
-public class PCCDijkstra implements PCC {
+public class Dijkstra implements IPCC {
 	// Nombre indiquant l'absence de calcul de la distance pour le noeud concerné
 	private static final int NON_CALCULE = -100;
 	
@@ -40,14 +42,13 @@ public class PCCDijkstra implements PCC {
 		
 		// Rempli le tableau de distance à "l'infini"
 		for (Integer i : g)
-			if (i != noeudD)
+			if (!i.equals(noeudD))
 				distances.put(i, NON_CALCULE);
 		
 		/* La longueur du chemin pour le noeud de départ est mis à 0
 		 * pour faciliter l'implémentation de l'algorithme
 		 */
 		distances.put(noeudD, 0);
-		
 		return distances;
 	}
 	
@@ -143,30 +144,6 @@ public class PCCDijkstra implements PCC {
 	
 	
 	/**
-	 * @param predecesseurs HashMap des prédécesseurs des noeuds en clé
-	 * @param noeudA Noeud d'arrivée
-	 * @return Le chemin du noeud de départ au noeud d'arrivée
-	 */
-	private static String affichage(Map<Integer, Integer> predecesseurs,
-							Integer noeudD, Integer noeudA, Integer distance) {
-		StringBuilder sb = new StringBuilder();
-		
-		Integer i = noeudA;
-		
-		while(true){
-			sb.insert(0,  " ");
-			sb.insert(0, i);
-			if (!i.equals(noeudD))
-				i = predecesseurs.get(i);
-			else
-				break;
-		}
-		return "Dijkstra" + System.lineSeparator()
-		+ distance + System.lineSeparator() + sb.toString();
-	}
-	
-	
-	/**
 	 * @brief Algorithme de Dijkstra
 	 * @param g Graphe contenant les noeuds
 	 * @param noeudD Noeud de départ
@@ -177,7 +154,7 @@ public class PCCDijkstra implements PCC {
 	 * 					d'arrivé n'est trouvé
 	 */
 	@Override
-	public String algorithme(IGraphe g, Integer noeudD, Integer noeudA)
+	public int pc(IGraphe g, Integer noeudD, Integer noeudA, List<Integer> chemin)
 											throws ArcNégatifEx, NoPathEx {
 		if (!estOK(g)) { throw new ArcNégatifEx(); }
 		
@@ -192,20 +169,33 @@ public class PCCDijkstra implements PCC {
 		
 		/* Tant que le noeud d'arrivée n'a pas la certitude d'avoir eu le chemin
 		   le plus court, poursuivre l'algorithme */
-		while(noeudActuel != noeudA) {
+		while(!noeudActuel.equals(noeudA)) {
 			//System.out.println(distances + " " + predecesseurs);
+			
+			// On actualise en permanence le noeud "actuel"
+			noeudActuel = choixNoeudSuivant(g, distances, predecesseurs, noeudActuel, noeudA);
+			
 			/* 
 			 * Si aucun noeud n'a été choisi comme prochain noeud de calcul
 			 * et que le noeud d'arrivée n'a pas encore trouvé de chemin
 			 * certifié optimisé, alors il n'y a pas de chemins atteignable
 			 * pour le noeud d'arrivée
 			 */
+			//System.out.println(noeudActuel);
 			if (noeudActuel == null)
 				throw new NoPathEx();
-			
-			// On actualise en permanence le noeud "actuel"
-			noeudActuel = choixNoeudSuivant(g, distances, predecesseurs, noeudActuel, noeudA);
 		}
-		return affichage(predecesseurs, noeudD, noeudA, distances.get(noeudA));
+		
+		Integer i = noeudA;
+		
+		while(true){
+			chemin.add(0, i);
+			if (!i.equals(noeudD))
+				i = predecesseurs.get(i);
+			else
+				break;
+		}
+		
+		return distances.get(noeudA);
 	}
 }

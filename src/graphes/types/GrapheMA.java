@@ -28,15 +28,15 @@ public class GrapheMA extends Graphe{
 
 	@Override
 	public String toString() {
-		String str = "";
+		StringBuilder str = new StringBuilder();
 		int v;
 		for(int i = 1; i<= getNbSommets(); ++i) {
-			str += (i) + " =>";
+			str.append((i) + " =>");
 			for (int j = 1; j <= getNbSommets(); ++j)
 				if ((v= getValuation(i,j)) != INFINI) 
-					str += " " + j + "(" + v + ")";
-			str +="\n";
+					str.append(" " + j + "(" + v + ")");
+			str.append("\n");
 		}
-		return str;
+		return str.toString();
 	}
 }

@@ -1,4 +1,4 @@
-package algorithmes;
+package pcc;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,8 +8,9 @@ import java.util.Map;
 import exceptions.CircuitAbsorbantEx;
 import exceptions.NoPathEx;
 import graphes.IGraphe;
+import graphes.IPCC;
 
-public class PCCBellman implements PCC {
+public class Bellman implements IPCC {
 	/**
 	 * @brief
 	 * @param g Graphe
@@ -49,7 +50,6 @@ public class PCCBellman implements PCC {
 		}
 	}
 	
-	@Override
 	public boolean estOK(IGraphe g) {
 		List<Integer> listeNoeudsParNiveau = new ArrayList<>();// Liste des noeuds triées par niveau
 		Map<Integer, List<Integer>> listePredecesseurs = listePredecesseurs(g);// Liste de prédecesseur de chaque noeud
@@ -111,7 +111,7 @@ public class PCCBellman implements PCC {
 		while(listePredecesseurs.containsValue(new ArrayList<>())) {
 			for (Integer i : g) {
 				if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).isEmpty()) {
-					if (i == noeudA)
+					if (i.equals(noeudA))
 						throw new NoPathEx();
 					suppressionRecursive(g, listePredecesseurs, i, noeudA);
 				}
@@ -147,7 +147,7 @@ public class PCCBellman implements PCC {
 				listePredecesseurs.get(i).remove(noeudASupprimer);
 			
 			if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(noeudASupprimer)) {
-				if (i == noeudA)
+				if (i.equals(noeudA))
 					throw new NoPathEx();
 				listePredecesseurs.remove(i); // Supprimer le noeud de la HashMap
 				suppressionRecursive(g, listePredecesseurs, i, noeudA);
@@ -170,7 +170,7 @@ public class PCCBellman implements PCC {
 	}
 	
 	@Override
-	public String algorithme(IGraphe g, Integer noeudD, Integer noeudA) throws CircuitAbsorbantEx, NoPathEx {
+	public int pc(IGraphe g, Integer noeudD, Integer noeudA, List<Integer> chemin) throws CircuitAbsorbantEx, NoPathEx {
 		if (!estOK(g))
 			throw new CircuitAbsorbantEx();
 		
@@ -189,20 +189,13 @@ public class PCCBellman implements PCC {
 			}
 		}
 		
-		return affichage(predecesseurs, noeudA, distances.get(noeudA));
-	}
-
-
-	private static String affichage(Map<Integer, Integer> predecesseurs, Integer noeudA, Integer distance) {
-		StringBuilder sb = new StringBuilder();
 		Integer noeud = noeudA;
 		
-		while(noeud != null){
-			sb.insert(0,  " ");
-			sb.insert(0, noeud);
+		while(noeud != null) {
+			chemin.add(0, noeud);
 			noeud = predecesseurs.get(noeud);
 		}
-		return "Bellman sans circuit" + System.lineSeparator()
-		+ distance + System.lineSeparator() + sb.toString();
+		
+		return distances.get(noeudA);
 	}
 }
