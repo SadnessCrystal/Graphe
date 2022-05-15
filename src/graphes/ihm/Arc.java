@@ -1,7 +1,9 @@
 package graphes.ihm;
 
 public class Arc {
-	private int source, valuation, destination;
+	private int source;
+	private int valuation;
+	private int destination;
 	public Arc () { 
 		this(0,0,0);
 	}

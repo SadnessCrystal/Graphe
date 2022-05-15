@@ -12,13 +12,11 @@ import graphes.IPCC;
 
 public class Bellman implements IPCC {
 	/**
-	 * @brief
+	 * @brief Suppression des noeud avec pas ou plus de predecesseurs
 	 * @param g Graphe
 	 * @param listePredecesseurs HashMap des prédecesseurs de chaque noeud
-	 * @param listeNoeudsTriesTemporaire Liste vide, contiendra la liste des noeuds triés
-	 * @param listeNoeudsParNiveau 
-	 * @param nbNoeudTriee Nombre de noeuds triés
-	 * @return
+	 * @param listeNoeudsTriesTemporaire Liste des noeuds venant d'être triés
+	 * @param listeNoeudsParNiveau Liste des noeuds triés par niveau
 	 */
 	private static void nettoyagePredecesseurs(IGraphe g, Map<Integer, List<Integer>> listePredecesseurs, List<Integer> listeNoeudsTriesTemporaire, List<Integer> listeNoeudsParNiveau) {
 		for (Integer i : g) {
@@ -40,16 +38,16 @@ public class Bellman implements IPCC {
 	 */
 	private static void suppressionPredecesseurs(IGraphe g, Map<Integer, List<Integer>> listePredecesseurs, List<Integer> listeNoeudsTriesTemporaire) {
 		for (Integer i : g) {
-			for (int j : listeNoeudsTriesTemporaire) {
+			for (Integer j : listeNoeudsTriesTemporaire) {
 				/* Si un noeud venant d'être trié est encore présent en tant que prédécesseur,
 				 * alors le supprimer de la liste des prédecesseurs */
-				//System.out.println(listePredecesseurs.containsKey(10) && listePredecesseurs.get(10).contains(8));
 				if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(j))
-					listePredecesseurs.get(i).remove(Integer.valueOf(j));
+					listePredecesseurs.get(i).remove(j);
 			}
 		}
 	}
 	
+	@Override
 	public boolean estOK(IGraphe g) {
 		List<Integer> listeNoeudsParNiveau = new ArrayList<>();// Liste des noeuds triées par niveau
 		Map<Integer, List<Integer>> listePredecesseurs = listePredecesseurs(g);// Liste de prédecesseur de chaque noeud
@@ -60,16 +58,12 @@ public class Bellman implements IPCC {
 			
 			int nbNoeudTriee = listeNoeudsParNiveau.size();
 			
-			//System.out.println("Avant : " + listePredecesseurs + " " + listeNoeudsParNiveau);
-			
 			// Detection des noeuds de niveau supérieur
 			nettoyagePredecesseurs(g, listePredecesseurs, listeNoeudsTriesTemporaire, listeNoeudsParNiveau);
 			
 			// Si aucun noeud n'a été trié, c'est la preuve d'un circuit
 			if (listeNoeudsParNiveau.size() == nbNoeudTriee)
 				return false;
-			
-			//System.out.println("Après : " + listePredecesseurs + " " + listeNoeudsParNiveau + " (" + listeNoeudsTriesTemporaire + ")");
 			
 			// Suppression de la liste des prédecesseurs des noeuds venant d'être triés
 			suppressionPredecesseurs(g, listePredecesseurs, listeNoeudsTriesTemporaire);
@@ -78,7 +72,10 @@ public class Bellman implements IPCC {
 		return true;
 	}
 	
-	
+	/**
+	 * @param g Graphe
+	 * @return Retourne les prédecesseurs de chaque noeud
+	 */
 	private static Map<Integer, List<Integer>> listePredecesseurs(IGraphe g){
 		Map<Integer, List<Integer>> predecesseurs = new HashMap<>();
 		// Insersion des prédécesseurs
@@ -91,13 +88,13 @@ public class Bellman implements IPCC {
 		return predecesseurs;
 	}
 	
-	
 	/**
-	 * 
-	 * @param g
-	 * @param distances
-	 * @param listeNoeudsParNiveau
-	 * @param noeudD
+	 * @brief Trie par niveau les noeuds
+	 * @param g Graphe
+	 * @param distances La distance du noeud de départ pour chaque noeud
+	 * @param listeNoeudsParNiveau Liste des noeuds triée par niveau
+	 * @param noeudD Noeud de départ
+	 * @param noeudA Noeud d'arrivée
 	 * @throws NoPathEx
 	 */
 	private static void triParNiveau(IGraphe g, Map<Integer, Integer> distances, List<Integer> listeNoeudsParNiveau, Integer noeudD, Integer noeudA) throws NoPathEx{
@@ -105,20 +102,8 @@ public class Bellman implements IPCC {
 		Map<Integer, List<Integer>> listePredecesseurs = listePredecesseurs(g);
 		distances.put(noeudD, 0);
 		
-		listePredecesseurs.remove(noeudD);
-		
-		// Tant qu'il reste des ArrayList vides : 
-		while(listePredecesseurs.containsValue(new ArrayList<>())) {
-			for (Integer i : g) {
-				if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).isEmpty()) {
-					if (i.equals(noeudA))
-						throw new NoPathEx();
-					suppressionRecursive(g, listePredecesseurs, i, noeudA);
-				}
-			}
-		}
-		
-		listePredecesseurs.put(noeudD, new ArrayList<>());
+		// Suppression les prédecesseurs inutiles
+		preSuppresionPredecesseurs(g, noeudD, noeudA, listePredecesseurs);
 		
 		int nbNoeudTrieeMax = listePredecesseurs.size();
 		
@@ -133,26 +118,44 @@ public class Bellman implements IPCC {
 			suppressionPredecesseurs(g, listePredecesseurs, listeNoeudsTriesTemporaire);
 		}
 	}
-	
-	
-	private static void suppressionRecursive(IGraphe g, Map<Integer, List<Integer>> listePredecesseurs, Integer noeudASupprimer, Integer noeudA) {
-		assert(listePredecesseurs.get(noeudASupprimer).isEmpty());
+
+	/**
+	 * @brief Supprime tous les prédecesseurs, jusqu'au noeud de départ
+	 * @param g Graphe
+	 * @param noeudD Noeud de départ
+	 * @param noeudA Noeud d'arrivée
+	 * @param listePredecesseurs Liste des prédecesseurs de chaque noeud
+	 */
+	private static void preSuppresionPredecesseurs(IGraphe g, Integer noeudD, Integer noeudA,
+			Map<Integer, List<Integer>> listePredecesseurs) throws NoPathEx {
+		/* On supprimer temporairement le noeud de départ pour que
+		 * ses successeurs ne soient pas supprimés*/
+		listePredecesseurs.remove(noeudD);
 		
-		listePredecesseurs.remove(noeudASupprimer);
-		
-		// Parcourir la liste de prédecesseurs de noeuds.
-		for (Integer i : g) {
-			// Si le noeud à supprimer existe en tant que prédecesseur, le supprimer
-			if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(noeudASupprimer))
-				listePredecesseurs.get(i).remove(noeudASupprimer);
-			
-			if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(noeudASupprimer)) {
-				if (i.equals(noeudA))
-					throw new NoPathEx();
-				listePredecesseurs.remove(i); // Supprimer le noeud de la HashMap
-				suppressionRecursive(g, listePredecesseurs, i, noeudA);
+		// Tant qu'il reste des noeud sans prédécesseurs : 
+		while(listePredecesseurs.containsValue(new ArrayList<>())) {
+			for (Integer noeudASupprimer : g) {
+				// Si le noeud n'a pas ou plus de prédecesseurs
+				if (listePredecesseurs.containsKey(noeudASupprimer) && listePredecesseurs.get(noeudASupprimer).isEmpty()) {
+					/* Si le noeud en question est le noeud de départ,
+					 * cela signifie qu'il n'existe aucun chemin entre
+					 * lui et le noeud de départ*/
+					if (noeudASupprimer.equals(noeudA))
+						throw new NoPathEx();
+					
+					listePredecesseurs.remove(noeudASupprimer);
+					
+					// Parcourir la liste de prédecesseurs de noeuds.
+					for (Integer i : g)
+						// Si le noeud à supprimer existe en tant que prédecesseur, le supprimer
+						if (listePredecesseurs.containsKey(i) && listePredecesseurs.get(i).contains(noeudASupprimer))
+							listePredecesseurs.get(i).remove(noeudASupprimer);
+				}
 			}
 		}
+		
+		// Reinsérer le noeud de départ
+		listePredecesseurs.put(noeudD, new ArrayList<>());
 	}
 	
 

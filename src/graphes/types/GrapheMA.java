@@ -14,14 +14,14 @@ public class GrapheMA extends Graphe{
 	public int getNbSommets() { return ma.length; }
 	
 	@Override
-	public int getValuation(int a, int b) {
-		assert estArcOK(a,b);
+	public int getValuation(int a, int b) throws IllegalArgumentException {
+		if (!estArcOK(a,b)) throw new IllegalArgumentException();
 		return ma[a-1][b-1];
 	}
 	
 	@Override
-	public void ajouterArc(int a, int v, int b) {
-		assert ! aArc(a,b);
+	public void ajouterArc(int a, int v, int b) throws IllegalArgumentException {
+		if (!estArcOK(a,b)) throw new IllegalArgumentException();
 		ma[a-1][b-1] = v;
 	}
 	

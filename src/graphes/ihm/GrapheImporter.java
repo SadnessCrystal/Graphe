@@ -14,12 +14,9 @@ import graphes.types.GrapheLA;
 import pcc.Dijkstra;
 
 public class GrapheImporter {
-	public static void main(String[] args) throws NumberFormatException, FileNotFoundException, IOException {
+	public static void main(String[] args) throws NumberFormatException, IOException {
 		String fileName = "graphes/ac/g-10-1.txt";
 		System.out.println();
-		/*if (args.length != 1) 
-			fileName = "graphe1.txt";
-		else fileName = args[0];*/
 		System.out.println("filename = "+ fileName);
 		Arc df = new Arc();
 		IGraphe g = importer(fileName, df);
@@ -110,6 +107,7 @@ public class GrapheImporter {
 			while (sc.hasNext())
 				sb.append(sc.next() + " ");
 			sb.deleteCharAt(sb.length()-1);
+			sc.close();
 			return ("pas de chemin entre " + df.getSource() + " et " + df.getDestination()).equals(sb.toString());
 		}
 	}
@@ -140,7 +138,10 @@ public static void verifierGraphes() throws FileNotFoundException {
 	 */
 	public static Arc parse(String string) {
 		String[] parts = string.split(" ");
-		int source, valuation, destination;
+		int source;
+		int valuation;
+		int destination;
+		
 		try {  
 			source = Integer.parseInt(parts[0]);
 			valuation = Integer.parseInt(parts[1]);
@@ -148,8 +149,7 @@ public static void verifierGraphes() throws FileNotFoundException {
 		} catch (Exception e) {
 			throw new IllegalArgumentException(string + " n'est pas un arc");
 		}
-		Arc a = new Arc(source, valuation, destination);
-		return a;
+		return new Arc(source, valuation, destination);
 	}
 	
 	/**
@@ -194,7 +194,7 @@ public static void verifierGraphes() throws FileNotFoundException {
 	 * @throws FileNotFoundException
 	 */
 	public static IGraphe importer(String filepath, Arc df) 
-								throws  NumberFormatException, IOException, FileNotFoundException {
+								throws  NumberFormatException, IOException {
 		File file = new File(filepath);
 		return importer(file, df);
       }
@@ -218,9 +218,10 @@ public static void verifierGraphes() throws FileNotFoundException {
 		line = sc.nextLine(); // distance attendue
 		int distance = Integer.parseInt(line.trim());
 		line = sc.nextLine(); // chemin
+		sc.close();
 		String[] noeuds = line.split(" ");
 		for(String s : noeuds)
 			chemin.add(Integer.parseInt(s));
 		return distance;
-		}
+	}
 }

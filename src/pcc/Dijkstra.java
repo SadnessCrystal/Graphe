@@ -13,11 +13,6 @@ public class Dijkstra implements IPCC {
 	// Nombre indiquant l'absence de calcul de la distance pour le noeud concerné
 	private static final int NON_CALCULE = -100;
 	
-	/**
-	 * @brief Indique si l'algorithme de Dijkstra peut ici être appliqué
-	 * @param g Le graphe
-	 * @return true si applicable, false sinon
-	 */
 	@Override
 	public boolean estOK(IGraphe g) {
 		for (Integer i : g)
@@ -113,7 +108,7 @@ public class Dijkstra implements IPCC {
 	 * @param predecesseurs HashMap des prédécesseurs des noeuds en clé
 	 * @param noeudP Le noeud précédant (le noeud de départ si c'est la première
 	 * 				 boucle, le noeudSuivant précédant sinon)
-	 * @param noeudA : ???
+	 * @param noeudA : Le noeud d'arrivée
 	 * @return noeudSuivant, le noeud suivant
 	 */
 	private static Integer choixNoeudSuivant(IGraphe g, Map<Integer, Integer> distances,
@@ -142,17 +137,6 @@ public class Dijkstra implements IPCC {
 		return noeudSuivant;
 	}
 	
-	
-	/**
-	 * @brief Algorithme de Dijkstra
-	 * @param g Graphe contenant les noeuds
-	 * @param noeudD Noeud de départ
-	 * @param noeudA Noeud d'arrivée
-	 * @return Le chemin le plus court entre noeudD et noeudA
-	 * @throws ArcNégatifEx S'il existe au moins un arc négatif dans le graphe
-	 * @throws NoPathEx Si aucun chemin entre le noeud de départ et le noeud
-	 * 					d'arrivé n'est trouvé
-	 */
 	@Override
 	public int pc(IGraphe g, Integer noeudD, Integer noeudA, List<Integer> chemin)
 											throws ArcNégatifEx, NoPathEx {
@@ -170,8 +154,6 @@ public class Dijkstra implements IPCC {
 		/* Tant que le noeud d'arrivée n'a pas la certitude d'avoir eu le chemin
 		   le plus court, poursuivre l'algorithme */
 		while(!noeudActuel.equals(noeudA)) {
-			//System.out.println(distances + " " + predecesseurs);
-			
 			// On actualise en permanence le noeud "actuel"
 			noeudActuel = choixNoeudSuivant(g, distances, predecesseurs, noeudActuel, noeudA);
 			
@@ -181,19 +163,15 @@ public class Dijkstra implements IPCC {
 			 * certifié optimisé, alors il n'y a pas de chemins atteignable
 			 * pour le noeud d'arrivée
 			 */
-			//System.out.println(noeudActuel);
 			if (noeudActuel == null)
 				throw new NoPathEx();
 		}
 		
-		Integer i = noeudA;
+		Integer noeud = noeudA;
 		
-		while(true){
-			chemin.add(0, i);
-			if (!i.equals(noeudD))
-				i = predecesseurs.get(i);
-			else
-				break;
+		while(noeud != null) {
+			chemin.add(0, noeud);
+			noeud = predecesseurs.get(noeud);
 		}
 		
 		return distances.get(noeudA);
